@@ -36,22 +36,36 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential git wget curl texinfo bison flex \
             libgmp-dev libmpfr-dev libmpc-dev libncurses-dev zlib1g-dev \
-            autoconf automake libtool libtool-bin bzip2 gzip pkg-config python3 perl patch xz-utils unzip rsync \
+            autoconf automake libtool libtool-bin gtk-doc-tools gettext bzip2 gzip pkg-config python3 perl patch xz-utils unzip rsync \
             p7zip-full squashfs-tools genisoimage
 
       # The MIPS compiler takes the longest to build, so it is kept between runs.
+      # If a run fails partway, what was built so far is kept too, together with
+      # the name of the step that failed, and the next run carries on from there
+      # instead of starting over.
       - name: Restore the cached compiler
         id: toolchain-cache
         uses: actions/cache/restore@v6
         with:
           path: sonix-player/rockbox-toolchain
           key: toolchain-${{ hashFiles('sonix-player/rockboxdev/**') }}
+          restore-keys: |
+            toolchain-partial-${{ hashFiles('sonix-player/rockboxdev/**') }}-
 
       - name: Build the MIPS compiler
+        id: toolchain-build
         if: steps.toolchain-cache.outputs.cache-hit != 'true'
         working-directory: sonix-player
-        # The Makefile names this target by its full path, so it has to be given that way.
-        run: make "$PWD/rockbox-toolchain/bin/mipsel-rockbox-linux-gnu-gcc"
+        run: |
+          set -o pipefail
+          marker=rockbox-toolchain/.restart-step
+          if [ -f "$marker" ]; then
+            export RBDEV_RESTART="$(cat "$marker")"
+            rm -f "$marker"
+            echo "Carrying on from an earlier run, at step: $RBDEV_RESTART"
+          fi
+          # The same thing the Makefile does for this target.
+          ./rockboxdev/rockboxdev.sh 2>&1 | tee ../toolchain-build.log
 
       - name: Save the compiler for next time
         if: success() && steps.toolchain-cache.outputs.cache-hit != 'true'
@@ -59,6 +73,24 @@ jobs:
         with:
           path: sonix-player/rockbox-toolchain
           key: toolchain-${{ hashFiles('sonix-player/rockboxdev/**') }}
+
+      - name: Remember how far the compiler build got
+        if: failure() && steps.toolchain-build.outcome == 'failure'
+        working-directory: sonix-player
+        run: |
+          step=$(grep -o "Starting step '[^']*'" ../toolchain-build.log | tail -1 | sed "s/Starting step '//; s/'//")
+          echo "The compiler build failed in step: $step"
+          if [ -n "$step" ]; then
+            mkdir -p rockbox-toolchain
+            echo "$step" > rockbox-toolchain/.restart-step
+          fi
+
+      - name: Save the compiler's progress
+        if: failure() && steps.toolchain-build.outcome == 'failure'
+        uses: actions/cache/save@v6
+        with:
+          path: sonix-player/rockbox-toolchain
+          key: toolchain-partial-${{ hashFiles('sonix-player/rockboxdev/**') }}-${{ github.run_id }}
 
       - name: Build the player
         working-directory: sonix-player
