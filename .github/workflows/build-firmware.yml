@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Check out the code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Free up disk space
         run: |
@@ -42,7 +42,7 @@ jobs:
       # The MIPS compiler takes the longest to build, so it is kept between runs.
       - name: Restore the cached compiler
         id: toolchain-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: sonix-player/rockbox-toolchain
           key: toolchain-${{ hashFiles('sonix-player/rockboxdev/**') }}
@@ -55,7 +55,7 @@ jobs:
 
       - name: Save the compiler for next time
         if: success() && steps.toolchain-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: sonix-player/rockbox-toolchain
           key: toolchain-${{ hashFiles('sonix-player/rockboxdev/**') }}
@@ -79,7 +79,7 @@ jobs:
           ls -l *.upt
 
       - name: Keep the results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sonix-r1-firmware
           path: |
