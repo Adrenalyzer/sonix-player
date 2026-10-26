@@ -1,0 +1,494 @@
+diff --git a/sonix-packer/assets/R1/usr/resource/sonix/language/Chinese.ini b/sonix-packer/assets/R1/usr/resource/sonix/language/Chinese.ini
+index 82395c2..f64587e 100644
+--- a/sonix-packer/assets/R1/usr/resource/sonix/language/Chinese.ini
++++ b/sonix-packer/assets/R1/usr/resource/sonix/language/Chinese.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = 连接 Wi-Fi
+ setupwifi_note = 连接后，播放器可以自动设置日期和时间。
+ setupwifi_skip = 跳过
+ setupwifi_connecting = 正在连接 %s...
++quickpanel_power_off = 关机
+diff --git a/sonix-packer/assets/R1/usr/resource/sonix/language/Deutsch.ini b/sonix-packer/assets/R1/usr/resource/sonix/language/Deutsch.ini
+index a2548bd..dca4571 100644
+--- a/sonix-packer/assets/R1/usr/resource/sonix/language/Deutsch.ini
++++ b/sonix-packer/assets/R1/usr/resource/sonix/language/Deutsch.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Mit WLAN verbinden
+ setupwifi_note = Verbunden kann der Player Datum und Uhrzeit selbst einstellen.
+ setupwifi_skip = Überspringen
+ setupwifi_connecting = Verbinde mit %s...
++quickpanel_power_off = Ausschalten
+diff --git a/sonix-packer/assets/R1/usr/resource/sonix/language/English.ini b/sonix-packer/assets/R1/usr/resource/sonix/language/English.ini
+index 3dc3870..eeeee8c 100644
+--- a/sonix-packer/assets/R1/usr/resource/sonix/language/English.ini
++++ b/sonix-packer/assets/R1/usr/resource/sonix/language/English.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Connect to Wi-Fi
+ setupwifi_note = Once connected, the player can set the date and time by itself.
+ setupwifi_skip = Skip
+ setupwifi_connecting = Connecting to %s...
++quickpanel_power_off = Power off
+diff --git "a/sonix-packer/assets/R1/usr/resource/sonix/language/Espa\303\261ol.ini" "b/sonix-packer/assets/R1/usr/resource/sonix/language/Espa\303\261ol.ini"
+index d5ed2d9..79220d1 100644
+--- "a/sonix-packer/assets/R1/usr/resource/sonix/language/Espa\303\261ol.ini"
++++ "b/sonix-packer/assets/R1/usr/resource/sonix/language/Espa\303\261ol.ini"
+@@ -1361,3 +1361,4 @@ setupwifi_title = Conéctate al Wi-Fi
+ setupwifi_note = Una vez conectado, el reproductor puede ajustar la fecha y la hora por sí solo.
+ setupwifi_skip = Omitir
+ setupwifi_connecting = Conectando a %s...
++quickpanel_power_off = Apagar
+diff --git "a/sonix-packer/assets/R1/usr/resource/sonix/language/Fran\303\247ais.ini" "b/sonix-packer/assets/R1/usr/resource/sonix/language/Fran\303\247ais.ini"
+index 47402bc..75991f0 100644
+--- "a/sonix-packer/assets/R1/usr/resource/sonix/language/Fran\303\247ais.ini"
++++ "b/sonix-packer/assets/R1/usr/resource/sonix/language/Fran\303\247ais.ini"
+@@ -1361,3 +1361,4 @@ setupwifi_title = Connexion au Wi-Fi
+ setupwifi_note = Une fois connecté, le lecteur peut régler la date et l'heure tout seul.
+ setupwifi_skip = Passer
+ setupwifi_connecting = Connexion à %s...
++quickpanel_power_off = Éteindre
+diff --git a/sonix-packer/assets/R1/usr/resource/sonix/language/Italiano.ini b/sonix-packer/assets/R1/usr/resource/sonix/language/Italiano.ini
+index 6ffc941..06af457 100644
+--- a/sonix-packer/assets/R1/usr/resource/sonix/language/Italiano.ini
++++ b/sonix-packer/assets/R1/usr/resource/sonix/language/Italiano.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Connettiti al Wi-Fi
+ setupwifi_note = Una volta connesso, il lettore può impostare data e ora da solo.
+ setupwifi_skip = Salta
+ setupwifi_connecting = Connessione a %s...
++quickpanel_power_off = Spegni
+diff --git a/sonix-packer/assets/R1/usr/resource/sonix/language/Japanese.ini b/sonix-packer/assets/R1/usr/resource/sonix/language/Japanese.ini
+index 9261005..8dbdc7a 100644
+--- a/sonix-packer/assets/R1/usr/resource/sonix/language/Japanese.ini
++++ b/sonix-packer/assets/R1/usr/resource/sonix/language/Japanese.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Wi-Fiに接続
+ setupwifi_note = 接続すると、日付と時刻が自動で設定されます。
+ setupwifi_skip = スキップ
+ setupwifi_connecting = %sに接続中…
++quickpanel_power_off = 電源オフ
+diff --git a/sonix-packer/assets/R1/usr/resource/sonix/language/Nederlands.ini b/sonix-packer/assets/R1/usr/resource/sonix/language/Nederlands.ini
+index 3d34378..aaae489 100644
+--- a/sonix-packer/assets/R1/usr/resource/sonix/language/Nederlands.ini
++++ b/sonix-packer/assets/R1/usr/resource/sonix/language/Nederlands.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Verbinden met wifi
+ setupwifi_note = Eenmaal verbonden kan de speler datum en tijd zelf instellen.
+ setupwifi_skip = Overslaan
+ setupwifi_connecting = Verbinden met %s...
++quickpanel_power_off = Uitschakelen
+diff --git a/sonix-packer/assets/R1/usr/resource/sonix/language/Polski.ini b/sonix-packer/assets/R1/usr/resource/sonix/language/Polski.ini
+index 72f0671..dca6840 100644
+--- a/sonix-packer/assets/R1/usr/resource/sonix/language/Polski.ini
++++ b/sonix-packer/assets/R1/usr/resource/sonix/language/Polski.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Połącz z Wi-Fi
+ setupwifi_note = Po połączeniu odtwarzacz sam ustawi datę i godzinę.
+ setupwifi_skip = Pomiń
+ setupwifi_connecting = Łączenie z %s...
++quickpanel_power_off = Wyłącz
+diff --git "a/sonix-packer/assets/R1/usr/resource/sonix/language/Portugu\303\252s BR.ini" "b/sonix-packer/assets/R1/usr/resource/sonix/language/Portugu\303\252s BR.ini"
+index ee7c34f..52b3070 100644
+--- "a/sonix-packer/assets/R1/usr/resource/sonix/language/Portugu\303\252s BR.ini"	
++++ "b/sonix-packer/assets/R1/usr/resource/sonix/language/Portugu\303\252s BR.ini"	
+@@ -1361,3 +1361,4 @@ setupwifi_title = Conecte-se ao Wi-Fi
+ setupwifi_note = Conectado, o player pode definir a data e a hora sozinho.
+ setupwifi_skip = Pular
+ setupwifi_connecting = Conectando a %s...
++quickpanel_power_off = Desligar
+diff --git a/sonix-packer/assets/R1/usr/resource/sonix/language/Russian.ini b/sonix-packer/assets/R1/usr/resource/sonix/language/Russian.ini
+index d6a454d..b4e2066 100644
+--- a/sonix-packer/assets/R1/usr/resource/sonix/language/Russian.ini
++++ b/sonix-packer/assets/R1/usr/resource/sonix/language/Russian.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Подключение к Wi-Fi
+ setupwifi_note = После подключения плеер сам установит дату и время.
+ setupwifi_skip = Пропустить
+ setupwifi_connecting = Подключение к %s...
++quickpanel_power_off = Выключить
+diff --git "a/sonix-packer/assets/R1/usr/resource/sonix/language/\304\214e\305\241tina.ini" "b/sonix-packer/assets/R1/usr/resource/sonix/language/\304\214e\305\241tina.ini"
+index 7946970..8c039f1 100644
+--- "a/sonix-packer/assets/R1/usr/resource/sonix/language/\304\214e\305\241tina.ini"
++++ "b/sonix-packer/assets/R1/usr/resource/sonix/language/\304\214e\305\241tina.ini"
+@@ -1361,3 +1361,4 @@ setupwifi_title = Připojení k Wi-Fi
+ setupwifi_note = Po připojení si přehrávač nastaví datum a čas sám.
+ setupwifi_skip = Přeskočit
+ setupwifi_connecting = Připojování k %s...
++quickpanel_power_off = Vypnout
+diff --git a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Chinese.ini b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Chinese.ini
+index 50fd6f0..be85fc5 100644
+--- a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Chinese.ini
++++ b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Chinese.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = 连接 Wi-Fi
+ setupwifi_note = 连接后，播放器可以自动设置日期和时间。
+ setupwifi_skip = 跳过
+ setupwifi_connecting = 正在连接 %s...
++quickpanel_power_off = 关机
+diff --git a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Deutsch.ini b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Deutsch.ini
+index 469035d..f950ce7 100644
+--- a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Deutsch.ini
++++ b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Deutsch.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Mit WLAN verbinden
+ setupwifi_note = Verbunden kann der Player Datum und Uhrzeit selbst einstellen.
+ setupwifi_skip = Überspringen
+ setupwifi_connecting = Verbinde mit %s...
++quickpanel_power_off = Ausschalten
+diff --git a/sonix-packer/assets/R3PII/usr/resource/sonix/language/English.ini b/sonix-packer/assets/R3PII/usr/resource/sonix/language/English.ini
+index 32636ac..03844d4 100644
+--- a/sonix-packer/assets/R3PII/usr/resource/sonix/language/English.ini
++++ b/sonix-packer/assets/R3PII/usr/resource/sonix/language/English.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Connect to Wi-Fi
+ setupwifi_note = Once connected, the player can set the date and time by itself.
+ setupwifi_skip = Skip
+ setupwifi_connecting = Connecting to %s...
++quickpanel_power_off = Power off
+diff --git "a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Espa\303\261ol.ini" "b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Espa\303\261ol.ini"
+index e42f294..9bdbbbf 100644
+--- "a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Espa\303\261ol.ini"
++++ "b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Espa\303\261ol.ini"
+@@ -1361,3 +1361,4 @@ setupwifi_title = Conéctate al Wi-Fi
+ setupwifi_note = Una vez conectado, el reproductor puede ajustar la fecha y la hora por sí solo.
+ setupwifi_skip = Omitir
+ setupwifi_connecting = Conectando a %s...
++quickpanel_power_off = Apagar
+diff --git "a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Fran\303\247ais.ini" "b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Fran\303\247ais.ini"
+index fd06ab6..bb3250a 100644
+--- "a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Fran\303\247ais.ini"
++++ "b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Fran\303\247ais.ini"
+@@ -1361,3 +1361,4 @@ setupwifi_title = Connexion au Wi-Fi
+ setupwifi_note = Une fois connecté, le lecteur peut régler la date et l'heure tout seul.
+ setupwifi_skip = Passer
+ setupwifi_connecting = Connexion à %s...
++quickpanel_power_off = Éteindre
+diff --git a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Italiano.ini b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Italiano.ini
+index 2d79a0a..3d0c218 100644
+--- a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Italiano.ini
++++ b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Italiano.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Connettiti al Wi-Fi
+ setupwifi_note = Una volta connesso, il lettore può impostare data e ora da solo.
+ setupwifi_skip = Salta
+ setupwifi_connecting = Connessione a %s...
++quickpanel_power_off = Spegni
+diff --git a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Japanese.ini b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Japanese.ini
+index b2f5662..1b0fc9f 100644
+--- a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Japanese.ini
++++ b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Japanese.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Wi-Fiに接続
+ setupwifi_note = 接続すると、日付と時刻が自動で設定されます。
+ setupwifi_skip = スキップ
+ setupwifi_connecting = %sに接続中…
++quickpanel_power_off = 電源オフ
+diff --git a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Nederlands.ini b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Nederlands.ini
+index b08b489..86b356e 100644
+--- a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Nederlands.ini
++++ b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Nederlands.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Verbinden met wifi
+ setupwifi_note = Eenmaal verbonden kan de speler datum en tijd zelf instellen.
+ setupwifi_skip = Overslaan
+ setupwifi_connecting = Verbinden met %s...
++quickpanel_power_off = Uitschakelen
+diff --git a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Polski.ini b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Polski.ini
+index 9768b6e..632d926 100644
+--- a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Polski.ini
++++ b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Polski.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Połącz z Wi-Fi
+ setupwifi_note = Po połączeniu odtwarzacz sam ustawi datę i godzinę.
+ setupwifi_skip = Pomiń
+ setupwifi_connecting = Łączenie z %s...
++quickpanel_power_off = Wyłącz
+diff --git "a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Portugu\303\252s BR.ini" "b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Portugu\303\252s BR.ini"
+index b7afe1e..41d6055 100644
+--- "a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Portugu\303\252s BR.ini"	
++++ "b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Portugu\303\252s BR.ini"	
+@@ -1361,3 +1361,4 @@ setupwifi_title = Conecte-se ao Wi-Fi
+ setupwifi_note = Conectado, o player pode definir a data e a hora sozinho.
+ setupwifi_skip = Pular
+ setupwifi_connecting = Conectando a %s...
++quickpanel_power_off = Desligar
+diff --git a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Russian.ini b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Russian.ini
+index d12591e..9fe21e5 100644
+--- a/sonix-packer/assets/R3PII/usr/resource/sonix/language/Russian.ini
++++ b/sonix-packer/assets/R3PII/usr/resource/sonix/language/Russian.ini
+@@ -1361,3 +1361,4 @@ setupwifi_title = Подключение к Wi-Fi
+ setupwifi_note = После подключения плеер сам установит дату и время.
+ setupwifi_skip = Пропустить
+ setupwifi_connecting = Подключение к %s...
++quickpanel_power_off = Выключить
+diff --git "a/sonix-packer/assets/R3PII/usr/resource/sonix/language/\304\214e\305\241tina.ini" "b/sonix-packer/assets/R3PII/usr/resource/sonix/language/\304\214e\305\241tina.ini"
+index 09c3fb9..11a1542 100644
+--- "a/sonix-packer/assets/R3PII/usr/resource/sonix/language/\304\214e\305\241tina.ini"
++++ "b/sonix-packer/assets/R3PII/usr/resource/sonix/language/\304\214e\305\241tina.ini"
+@@ -1361,3 +1361,4 @@ setupwifi_title = Připojení k Wi-Fi
+ setupwifi_note = Po připojení si přehrávač nastaví datum a čas sám.
+ setupwifi_skip = Přeskočit
+ setupwifi_connecting = Připojování k %s...
++quickpanel_power_off = Vypnout
+diff --git a/sonix-player/src/gui/library/browser.c b/sonix-player/src/gui/library/browser.c
+index 0d34dd4..c786d73 100755
+--- a/sonix-player/src/gui/library/browser.c
++++ b/sonix-player/src/gui/library/browser.c
+@@ -910,8 +910,9 @@ static void entry_clicked_cb(lv_event_t *e) {
+ 		pending_scroll = -1;
+ 		browser_open_dir(full_path);
+ 	} else {
++		// Start the track and stay in the browser; the play mark on the row
++		// follows via browser_notify_now_playing().
+ 		player_play_file(full_path);
+-		switch_screen(player_screen);
+ 	}
+ }
+ 
+diff --git a/sonix-player/src/gui/shell/gui.c b/sonix-player/src/gui/shell/gui.c
+index 644fae2..6d8e283 100644
+--- a/sonix-player/src/gui/shell/gui.c
++++ b/sonix-player/src/gui/shell/gui.c
+@@ -9,6 +9,7 @@
+ #include <string.h>
+ 
+ #include "src/gui/library/browser.h"
++#include "src/system/core/config.h"
+ #include "src/gui/nowplaying/coverflow.h"
+ #include "src/gui/settings/ccsettings.h"
+ #include "src/gui/nowplaying/chapters.h"
+@@ -869,4 +870,13 @@ void gui_init(gui_config_t *cfg) {
+ 	}
+ 
+ 	switch_screen(main_menu_screen);
++
++	// Start in the file browser rather than on the home screen. The home
++	// screen is loaded first, so it is what the chevron walks back to from the
++	// browser's top folder. Not on a first boot: the language and clock
++	// questions are being asked over the home screen and should stay there.
++	// Set [ui] browser_at_boot = 0 in the config to get the home screen back.
++	if (!language_needed() && !timeset_needed() && config_get_bool("ui", "browser_at_boot", true)) {
++		switch_screen(browser_screen);
++	}
+ }
+diff --git a/sonix-player/src/gui/shell/quickpanel.c b/sonix-player/src/gui/shell/quickpanel.c
+index e314f13..a89c776 100755
+--- a/sonix-player/src/gui/shell/quickpanel.c
++++ b/sonix-player/src/gui/shell/quickpanel.c
+@@ -96,6 +96,7 @@ static lv_obj_t *sleep_audiobook_btn;
+ static lv_obj_t *sleep_podcast_btn;
+ static lv_obj_t *wifi_transfer_btn;
+ static lv_obj_t *gapless_btn;
++static lv_obj_t *power_btn;
+ 
+ // ---------------------------------------------------------------------------
+ // Which buttons the panel carries, and where
+@@ -130,6 +131,7 @@ static const char *const button_key[QP_BTN_COUNT] = {
+ 	[QP_BTN_SLEEP_PODCAST] = "sleep_podcast",
+ 	[QP_BTN_WIFI_TRANSFER] = "wifi_transfer",
+ 	[QP_BTN_GAPLESS] = "gapless",
++	[QP_BTN_POWER] = "power",
+ };
+ 
+ static const char *const button_tag[QP_BTN_COUNT] = {
+@@ -149,6 +151,7 @@ static const char *const button_tag[QP_BTN_COUNT] = {
+ 	[QP_BTN_SLEEP_PODCAST] = "quickpanel_sleep_podcast",
+ 	[QP_BTN_WIFI_TRANSFER] = "wifitransfer_title",
+ 	[QP_BTN_GAPLESS] = "musicsettings_gapless_playback",
++	[QP_BTN_POWER] = "quickpanel_power_off",
+ };
+ 
+ static uint8_t slots[QP_SLOT_COUNT];  // the grid, QP_BTN_NONE where it is empty
+@@ -1052,7 +1055,8 @@ static void order_load(void) {
+ 		// panel nobody asked to change, so they wait among the unused ones, where
+ 		// the settings page shows them.
+ 		bool waits = i == QP_BTN_DLNA || i == QP_BTN_SLEEP_MUSIC || i == QP_BTN_SLEEP_AUDIOBOOK ||
+-					 i == QP_BTN_SLEEP_PODCAST || i == QP_BTN_WIFI_TRANSFER || i == QP_BTN_GAPLESS;
++					 i == QP_BTN_SLEEP_PODCAST || i == QP_BTN_WIFI_TRANSFER || i == QP_BTN_GAPLESS ||
++					 i == QP_BTN_POWER;
+ 		if ((saved_version < 2 && i == QP_BTN_FADE) || waits) {
+ 			hidden[hidden_n++] = (uint8_t)i;
+ 		} else {
+@@ -1171,6 +1175,8 @@ static lv_obj_t *button_widget(quickpanel_button_t which) {
+ 		return wifi_transfer_btn;
+ 	case QP_BTN_GAPLESS:
+ 		return gapless_btn;
++	case QP_BTN_POWER:
++		return power_btn;
+ 	default:
+ 		return NULL;
+ 	}
+@@ -1385,6 +1391,8 @@ const lv_image_dsc_t *quickpanel_button_icon(quickpanel_button_t button) {
+ 		return &icon_wifi_transfer_quick;
+ 	case QP_BTN_GAPLESS:
+ 		return &icon_gapless_on_quick;
++	case QP_BTN_POWER:
++		return &icon_power_off;
+ 	default:
+ 		return &icon_wifi;
+ 	}
+@@ -1405,6 +1413,16 @@ static void circle_guard_cb(lv_event_t *e) {
+ 	}
+ }
+ 
++// Power off, now. No slider and no confirmation: this is the one-tap way down,
++// reached by pulling the control centre open and pressing the button. The
++// accidental-press protection of the power key's slide-to-confirm menu is
++// traded for speed on purpose.
++static void power_clicked_cb(lv_event_t *e) {
++	(void)e;
++	printf("power: shutting down from the control centre\n");
++	power_shutdown();
++}
++
+ // One round quick control: a circle in the pressed-surface colour with the
+ // glyph centred on it. Callers attach their own handlers. Presses bubble on to
+ // the sheet, so a drag that starts on a circle moves the sheet or the card like
+@@ -2064,6 +2082,12 @@ void quickpanel_init(gui_config_t *cfg) {
+ 	lv_obj_add_event_cb(gapless_btn, gapless_clicked_cb, LV_EVENT_CLICKED, NULL);
+ 	lv_obj_add_event_cb(gapless_btn, gapless_page_cb, LV_EVENT_LONG_PRESSED, NULL);
+ 
++	// The power glyph is a 56 px bitmap for the power menu's knob; the round
++	// buttons carry 46 px ones, so it is scaled to match (46/56 of 256).
++	power_btn = make_circle_button(row, &icon_power_off);
++	lv_image_set_scale(lv_obj_get_child(power_btn, 0), 210);
++	lv_obj_add_event_cb(power_btn, power_clicked_cb, LV_EVENT_CLICKED, NULL);
++
+ 	bright_row = lv_obj_create(controls_card);
+ 	lv_obj_set_size(bright_row, lv_pct(100), BRIGHT_ROW_H);
+ 	lv_obj_set_style_bg_opa(bright_row, 0, 0);
+diff --git a/sonix-player/src/gui/shell/quickpanel.h b/sonix-player/src/gui/shell/quickpanel.h
+index ac72b19..a143199 100755
+--- a/sonix-player/src/gui/shell/quickpanel.h
++++ b/sonix-player/src/gui/shell/quickpanel.h
+@@ -67,6 +67,10 @@ typedef enum {
+ 	QP_BTN_SLEEP_PODCAST,
+ 	QP_BTN_WIFI_TRANSFER,
+ 	QP_BTN_GAPLESS,
++	// Powers the device off at once, with no slider: the control centre has to be
++	// pulled down first, which is the deliberate gesture the power menu's slide
++	// stands in for.
++	QP_BTN_POWER,
+ 	QP_BTN_COUNT,
+ 	QP_BTN_NONE = QP_BTN_COUNT, // an empty place in the grid
+ } quickpanel_button_t;
+diff --git a/sonix-player/src/system/audio/audio.c b/sonix-player/src/system/audio/audio.c
+index ba96422..67f4868 100644
+--- a/sonix-player/src/system/audio/audio.c
++++ b/sonix-player/src/system/audio/audio.c
+@@ -3193,6 +3193,9 @@ static void play_decoded_file(const char *filepath, decode_format_t format) {
+ 		return;
+ 	}
+ 
++	// MP3: build the seek index in the background now, not on the first seek.
++	decoder_prepare_seek(dec);
++
+ 	// Headphones have no DSD mode to switch into: DSD goes to them as PCM.
+ 	bool dsd_as_pcm = decoder_passthrough(dec) && output_is_bluetooth() && decoder_dsd_to_pcm(dec);
+ 
+diff --git a/sonix-player/src/system/decode/decode.c b/sonix-player/src/system/decode/decode.c
+index e6f5580..5966793 100755
+--- a/sonix-player/src/system/decode/decode.c
++++ b/sonix-player/src/system/decode/decode.c
+@@ -1442,12 +1442,31 @@ static void mp3_index_async(decoder_t *dec, long start, long avail) {
+ 	fprintf(stderr, "decode: building the mp3 index of a %ld MB file in the background\n", avail >> 20);
+ }
+ 
+-// The background table, when it is ready: installed, and true.
+-static bool mp3_index_take(decoder_t *dec) {
++// The background table, when it is ready: installed, and true. With `block`,
++// waits for the build to finish first -- for a seek that needs an exact table
++// and has nothing quicker to offer; the wait is only what the thread has left
++// to do, since it has been running since the track started.
++static bool mp3_index_take_ex(decoder_t *dec, bool block) {
+ 	mp3_index_t *ix = &dec->mp3_index;
+ 	if (!ix->thread_started) {
+ 		return false;
+ 	}
++	if (block) {
++		pthread_join(ix->thread, NULL);
++		ix->thread_started = false;
++		pthread_mutex_lock(&ix->lock);
++		drmp3_seek_point *joined = ix->built_points;
++		drmp3_uint32 joined_count = ix->built_count;
++		long joined_scanned = ix->built_scanned;
++		ix->built_points = NULL;
++		pthread_mutex_unlock(&ix->lock);
++		if (!joined) {
++			ix->failed = true;
++			return false;
++		}
++		mp3_index_install(dec, joined, joined_count, joined_scanned);
++		return true;
++	}
+ 	pthread_mutex_lock(&ix->lock);
+ 	bool done = ix->done;
+ 	drmp3_seek_point *pts = ix->built_points;
+@@ -1468,6 +1487,29 @@ static bool mp3_index_take(decoder_t *dec) {
+ 	return true;
+ }
+ 
++static bool mp3_index_take(decoder_t *dec) { return mp3_index_take_ex(dec, false); }
++
++// Called when playback opens a file: starts the index building in the
++// background, so that by the first seek (or the first pause, which rewinds the
++// decoder the same way) it is usually done and nothing is built in the audio
++// thread. Nothing to do for a table kept from an earlier open of the same file,
++// or for a file still downloading, which is indexed as it grows.
++static void mp3_index_prepare(decoder_t *dec) {
++	mp3_index_t *ix = &dec->mp3_index;
++	if (dec->growing || ix->failed || ix->thread_started || ix->count > 0 || !dec->file[0] || dec->sample_rate <= 0) {
++		return;
++	}
++	if (mp3_index_from_kept(dec)) {
++		return;
++	}
++	long start = (long)dec->impl.mp3->streamStartOffset;
++	long avail = mp3_available_bytes(dec);
++	if (avail <= start + 4) {
++		return;
++	}
++	mp3_index_async(dec, start, avail);
++}
++
+ // Stops a background build and frees whatever it left. For decoder_close().
+ static void mp3_index_stop(mp3_index_t *ix) {
+ 	if (ix->thread_started) {
+@@ -2720,6 +2762,12 @@ bool decoder_take_starved(decoder_t *dec) {
+ 	return growfile_take_starved(dec->growing);
+ }
+ 
++void decoder_prepare_seek(decoder_t *dec) {
++	if (dec && dec->format == DECODE_FORMAT_MP3) {
++		mp3_index_prepare(dec);
++	}
++}
++
+ int decoder_seek_to_frame(decoder_t *dec, uint64_t frame_index) {
+ 	if (!dec)
+ 		return 0;
+@@ -2784,6 +2832,23 @@ int decoder_seek_to_frame(decoder_t *dec, uint64_t frame_index) {
+ 					drmp3_bind_seek_table(dec->impl.mp3, 0, NULL);
+ 				}
+ 			}
++		} else if (ix->count == 0 && ix->thread_started) {
++			// A short file whose index is still being built in the background
++			// (decoder_prepare_seek). A constant bitrate needs no index: its
++			// quick point is exact. Anything else waits for the thread, which
++			// has been at it since the track began, rather than building the
++			// whole table over again here.
++			drmp3_seek_point p;
++			long qavail = mp3_available_bytes(dec);
++			if (frame_index == 0) {
++				// Back to the start of the stream: dr_mp3 needs no table for it.
++			} else if (mp3_probe_cbr(dec, start, qavail) && mp3_quick_point(dec, frame_index, &p)) {
++				ix->quick[0] = mp3_start_point(start);
++				ix->quick[1] = p;
++				drmp3_bind_seek_table(dec->impl.mp3, 2, ix->quick);
++			} else {
++				mp3_index_take_ex(dec, true);
++			}
+ 		} else if (ix->count == 0 || stale) {
+ 			mp3_index_build(dec);
+ 		}
+diff --git a/sonix-player/src/system/decode/decode.h b/sonix-player/src/system/decode/decode.h
+index cc266be..2f275a4 100755
+--- a/sonix-player/src/system/decode/decode.h
++++ b/sonix-player/src/system/decode/decode.h
+@@ -135,6 +135,12 @@ int decoder_dsd_multiple(const decoder_t *dec);
+ // is not a DSD file or the filter could not be set up.
+ bool decoder_dsd_to_pcm(decoder_t *dec);
+ 
++// For playback to call once after opening a file it is going to play: starts
++// whatever a later seek will need building in the background (the MP3 frame
++// index), so the first seek or pause does not pay for it in the audio thread.
++// Harmless to call for any format, and never for scanning.
++void decoder_prepare_seek(decoder_t *dec);
++
+ // Seek decoder to the specified frame index. Returns nonzero on success, 0 on failure.
+ int decoder_seek_to_frame(decoder_t *dec, uint64_t frame_index);
+ 
