@@ -86,3 +86,19 @@ jobs:
             sonix-packer/r1.upt
             sonix-player/sonix_player
           if-no-files-found: error
+
+      # Only runs when something above failed. The compiler build writes its real
+      # error messages to log files, not to the console, so print the end of the
+      # newest one here.
+      - name: Show the compiler build log if something failed
+        if: failure()
+        run: |
+          echo "Red step above = where it stopped."
+          ls -t sonix-player/tmp/rbdev-build/*.log 2>/dev/null | head -3 || true
+          newest=$(ls -t sonix-player/tmp/rbdev-build/*.log 2>/dev/null | head -1 || true)
+          if [ -n "$newest" ]; then
+            echo "=== end of $newest"
+            tail -n 80 "$newest"
+          else
+            echo "No compiler build log found: the failure was in another step."
+          fi
