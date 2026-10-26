@@ -50,10 +50,11 @@ jobs:
       - name: Build the MIPS compiler
         if: steps.toolchain-cache.outputs.cache-hit != 'true'
         working-directory: sonix-player
-        run: make rockbox-toolchain/bin/mipsel-rockbox-linux-gnu-gcc
+        # The Makefile names this target by its full path, so it has to be given that way.
+        run: make "$PWD/rockbox-toolchain/bin/mipsel-rockbox-linux-gnu-gcc"
 
       - name: Save the compiler for next time
-        if: always() && steps.toolchain-cache.outputs.cache-hit != 'true'
+        if: success() && steps.toolchain-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: sonix-player/rockbox-toolchain
