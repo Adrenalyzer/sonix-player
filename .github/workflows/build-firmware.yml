@@ -1,0 +1,87 @@
+name: Build firmware
+
+# Run by hand from the Actions tab ("Run workflow"). Builds the player for the
+# HiBy R1 with sonix-changes.patch applied (if that file is in the repo's top
+# folder) and packs it into r1.upt, which you download from the run's page.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Apply the patch
+        run: |
+          if [ -f sonix-changes.patch ]; then
+            git apply --check sonix-changes.patch
+            git apply sonix-changes.patch
+            git status --short | head -40
+          else
+            echo "No sonix-changes.patch in the top folder: building the code as it is."
+          fi
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential git wget curl texinfo bison flex \
+            libgmp-dev libmpfr-dev libmpc-dev libncurses-dev zlib1g-dev \
+            autoconf automake libtool pkg-config python3 perl patch xz-utils unzip rsync \
+            p7zip-full squashfs-tools genisoimage
+
+      # The MIPS compiler takes the longest to build, so it is kept between runs.
+      - name: Restore the cached compiler
+        id: toolchain-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: sonix-player/rockbox-toolchain
+          key: toolchain-${{ hashFiles('sonix-player/rockboxdev/**') }}
+
+      - name: Build the MIPS compiler
+        if: steps.toolchain-cache.outputs.cache-hit != 'true'
+        working-directory: sonix-player
+        run: make rockbox-toolchain/bin/mipsel-rockbox-linux-gnu-gcc
+
+      - name: Save the compiler for next time
+        if: always() && steps.toolchain-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: sonix-player/rockbox-toolchain
+          key: toolchain-${{ hashFiles('sonix-player/rockboxdev/**') }}
+
+      - name: Build the player
+        working-directory: sonix-player
+        run: make target -j"$(nproc)"
+
+      - name: Get the stock R1 firmware
+        run: |
+          git clone --depth 1 https://github.com/hiby-modding/hiby_os_crack.git /tmp/hiby_os_crack
+          cp "/tmp/hiby_os_crack/r1/firmware/original/r1(v1.6).upt" sonix-packer/r1_original.upt
+          ls -l sonix-packer/r1_original.upt
+
+      - name: Pack the firmware
+        working-directory: sonix-packer
+        run: |
+          cp ../sonix-player/sonix_player ../sonix-player/sonix_launch .
+          chmod +x sonix_firmware_packer.sh
+          ./sonix_firmware_packer.sh
+          ls -l *.upt
+
+      - name: Keep the results
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonix-r1-firmware
+          path: |
+            sonix-packer/r1.upt
+            sonix-player/sonix_player
+          if-no-files-found: error
