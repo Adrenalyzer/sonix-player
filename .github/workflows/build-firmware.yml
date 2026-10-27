@@ -21,14 +21,23 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           df -h /
 
-      - name: Apply the patch
+      # Every .patch file in the top folder, one after another in name order, so
+      # patches can be stacked: 01-first.patch, 02-second.patch, and so on. A
+      # single sonix-changes.patch works the same way.
+      - name: Apply the patches
         run: |
-          if [ -f sonix-changes.patch ]; then
-            git apply --check sonix-changes.patch
-            git apply sonix-changes.patch
-            git status --short | head -40
+          shopt -s nullglob
+          found=0
+          for p in *.patch; do
+            echo "Applying $p"
+            git apply --check "$p"
+            git apply "$p"
+            found=1
+          done
+          if [ "$found" = 0 ]; then
+            echo "No .patch files in the top folder: building the code as it is."
           else
-            echo "No sonix-changes.patch in the top folder: building the code as it is."
+            git status --short | head -40
           fi
 
       - name: Install build tools
