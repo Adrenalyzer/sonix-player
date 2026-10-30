@@ -29,7 +29,7 @@ jobs:
           shopt -s nullglob
           found=0
           for p in *.patch; do
-            echo "Applying $p"
+            echo "Applying $p: $(wc -l < "$p") lines, $(wc -c < "$p") bytes"
             git apply --check "$p"
             git apply "$p"
             found=1
@@ -37,6 +37,7 @@ jobs:
           if [ "$found" = 0 ]; then
             echo "No .patch files in the top folder: building the code as it is."
           else
+            echo "Files changed by the patches: $(git status --short | grep -v '\.patch$' | wc -l)"
             git status --short | head -40
           fi
 
