@@ -229,6 +229,132 @@ index 0d34dd4..c786d73 100755
  	}
  }
  
+diff --git a/sonix-player/src/gui/library/playlistpage.c b/sonix-player/src/gui/library/playlistpage.c
+index 6c4c300..e229df7 100755
+--- a/sonix-player/src/gui/library/playlistpage.c
++++ b/sonix-player/src/gui/library/playlistpage.c
+@@ -1211,10 +1211,50 @@ static void new_playlist_cb(lv_event_t *e) {
+ // page checks, on the way in, whether anything it drew has moved since.
+ static unsigned rows_revision;
+ 
++// The starred tracks, as the first row of the page: a list that is never made
++// or deleted by hand, the way the playlists below it are, but one that grows
++// as tracks are starred. The list itself is the library's (it is stored by file
++// path, so it does not need a scanned card).
++static void favourites_row_clicked_cb(lv_event_t *e) {
++	(void)e;
++	if (player_sheet_drag_active() || switcher_back_drag_active()) {
++		return; // a swipe across the list, not a tap
++	}
++	medialist_open(tr("favourites"), LIBRARY_LIST_FAVOURITES, LIBRARY_FILTER_NONE, NULL);
++}
++
+ static void rebuild_rows(void) {
+ 	rows_revision = library_revision(LIBRARY_LIST_PLAYLIST);
+ 	lv_obj_clean(list);
+ 
++	// Favourites first. Not while picking a playlist for a track: that choice is
++	// among playlists, and a star has its own button.
++	if (!picking) {
++		lv_obj_t *fav_row = lv_btn_create(list);
++		lv_obj_set_size(fav_row, lv_pct(100), ROW_HEIGHT);
++		lv_obj_add_style(fav_row, &theme_style_card, 0);
++		lv_obj_add_style(fav_row, &theme_style_card_pressed, LV_STATE_PRESSED);
++		lv_obj_set_style_radius(fav_row, ROW_RADIUS, 0);
++		lv_obj_set_style_border_width(fav_row, 0, 0);
++		lv_obj_set_style_shadow_width(fav_row, 0, 0);
++		lv_obj_set_style_pad_hor(fav_row, 16, 0);
++		lv_obj_set_style_pad_column(fav_row, 14, 0);
++		lv_obj_set_flex_flow(fav_row, LV_FLEX_FLOW_ROW);
++		lv_obj_set_flex_align(fav_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
++		lv_obj_set_event_bubble(fav_row, true); // the player sheet drags from here too
++		lv_obj_add_event_cb(fav_row, favourites_row_clicked_cb, LV_EVENT_CLICKED, NULL);
++
++		lv_obj_t *fav_icon = lv_image_create(fav_row);
++		lv_image_set_src(fav_icon, &icon_star_filled);
++		lv_obj_add_style(fav_icon, &theme_style_icon, 0);
++		lv_obj_set_style_image_recolor_opa(fav_icon, LV_OPA_COVER, 0);
++
++		lv_obj_t *fav_label = lv_label_create(fav_row);
++		lv_label_set_text(fav_label, tr("favourites"));
++		lv_obj_add_style(fav_label, &theme_style_text, 0);
++		lv_obj_set_style_text_font(fav_label, &font_ui_24, 0);
++	}
++
+ 	// The "new playlist" row comes first in both modes: it is the only way the
+ 	// first playlist can be made.
+ 	lv_obj_t *new_row = lv_btn_create(list);
+diff --git a/sonix-player/src/gui/settings/musicsettings.c b/sonix-player/src/gui/settings/musicsettings.c
+index 7289816..bd8fafe 100755
+--- a/sonix-player/src/gui/settings/musicsettings.c
++++ b/sonix-player/src/gui/settings/musicsettings.c
+@@ -344,6 +344,12 @@ static void soundfield_refresh(void) {
+ 	settingsrow_toggle_slider_expanded(soundfield_card, on);
+ }
+ 
++// The control centre's button can flip the switch while this page is under it.
++static void soundfield_refresh_cb(lv_event_t *e) {
++	(void)e;
++	soundfield_refresh();
++}
++
+ static void soundfield_toggle_cb(lv_event_t *e) {
+ 	(void)e;
+ 	soundfield_set_enabled(lv_obj_has_state(soundfield_switch, LV_STATE_CHECKED));
+@@ -375,6 +381,7 @@ static void build_soundfield_page(gui_config_t *cfg) {
+ 	lv_label_set_text(note, tr("musicsettings_soundstage_note"));
+ 
+ 	soundfield_refresh();
++	lv_obj_add_event_cb(soundfield_screen, soundfield_refresh_cb, LV_EVENT_REFRESH, NULL);
+ 	switcher_attach_back_gesture(soundfield_screen);
+ }
+ 
+@@ -1136,6 +1143,7 @@ lv_obj_t *musicsettings_fade_screen(void) { return fade_screen; }
+ 
+ static lv_obj_t *playback_screen;
+ lv_obj_t *musicsettings_playback_screen(void) { return playback_screen; }
++lv_obj_t *musicsettings_soundfield_screen(void) { return soundfield_screen; }
+ 
+ bool musicsettings_fade_enabled(void) { return config_get_bool("audio", "fade", false); }
+ 
+@@ -1939,20 +1947,19 @@ void musicsettings_init(gui_config_t *cfg) {
+ 	// and Last.fm, which only reports what was played. Then the sound, from the
+ 	// widest tool to the narrowest, and the DAC's own switches at the end.
+ 	artistexceptions_init(cfg, organize_touched);
++	// Scan options, Library and Last.fm are built but have no row here: this list
++	// is kept to what is used on a card that is not scanned.
+ 	build_scan_page(cfg);
+-	settingsrow_add(container, "musicsettings_scan_options", NULL, switch_screen_cb, scan_screen);
+ 
+ 	build_playback_page(cfg);
+ 	settingsrow_add(container, "musicsettings_playback_options", NULL, switch_screen_cb, playback_screen);
+ 
+ 	build_library_page(cfg);
+-	settingsrow_add(container, "musicsettings_library", NULL, switch_screen_cb, library_screen);
+ 
+ 	build_nowplaying_page(cfg);
+ 	settingsrow_add(container, "musicsettings_now_playing", NULL, switch_screen_cb, nowplaying_screen);
+ 
+ 	lastfmsettings_init(cfg);
+-	settingsrow_add(container, "lastfm", NULL, switch_screen_cb, lastfmsettings_screen());
+ 
+ 	build_eq_page(cfg);
+ 	eq_row = settingsrow_add(container, "equaliser", NULL, switch_screen_cb, eq_screen);
+diff --git a/sonix-player/src/gui/settings/musicsettings.h b/sonix-player/src/gui/settings/musicsettings.h
+index 4474f3c..bb2ccb4 100755
+--- a/sonix-player/src/gui/settings/musicsettings.h
++++ b/sonix-player/src/gui/settings/musicsettings.h
+@@ -31,6 +31,10 @@ lv_obj_t *musicsettings_fade_screen(void);
+ // The playback options page, which holds the music sleep timer: what the
+ // control centre's sleep button for music opens on a long press.
+ lv_obj_t *musicsettings_playback_screen(void);
++
++// The soundfield page, for the control centre's button to open on a hold.
++lv_obj_t *musicsettings_soundfield_screen(void);
++
+ bool musicsettings_fade_enabled(void);
+ void musicsettings_set_fade_enabled(bool enabled);
+ 
 diff --git a/sonix-player/src/gui/shell/gui.c b/sonix-player/src/gui/shell/gui.c
 index 644fae2..6d8e283 100644
 --- a/sonix-player/src/gui/shell/gui.c
@@ -255,63 +381,122 @@ index 644fae2..6d8e283 100644
 +		switch_screen(browser_screen);
 +	}
  }
+diff --git a/sonix-player/src/gui/shell/main_menu.c b/sonix-player/src/gui/shell/main_menu.c
+index 862c419..ad3354a 100755
+--- a/sonix-player/src/gui/shell/main_menu.c
++++ b/sonix-player/src/gui/shell/main_menu.c
+@@ -3,6 +3,8 @@
+ #include <stdint.h>
+ 
+ #include "src/gui/library/audiobooks.h"
++#include "src/gui/library/browser.h"
++#include "src/gui/library/playlistpage.h"
+ #include "src/gui/shell/gridpage.h"
+ #include "src/gui/shell/gui.h"
+ #include "src/gui/shell/icons.h"
+@@ -21,8 +23,12 @@ void main_menu_init(gui_config_t *cfg) {
+ 	// Music and Audiobooks both open with the card out or at a computer, and
+ 	// say so on their own page.
+ 	const grid_entry_t entries[] = {
+-		{"music", &icon_menu_music, &music_screen},
+-		{"streaming", &icon_menu_streaming, &streaming_screen},
++		// Straight to the card's folders rather than to the Music page: with no
++		// library scanned that page offers only a scan.
++		{"music", &icon_menu_music, &browser_screen},
++		// An action rather than a screen: the page is set up for its own list on the
++		// way in. This place was Streaming's.
++		{"playlists", &icon_menu_playlist, NULL, playlistpage_open},
+ 		{"wireless", &icon_menu_wireless, &wireless_screen},
+ 		{"audiobooks", &icon_menu_audiobooks, &audiobooks_screen},
+ 		// The door to the More page, which holds the DAC and anything else
 diff --git a/sonix-player/src/gui/shell/quickpanel.c b/sonix-player/src/gui/shell/quickpanel.c
-index e314f13..a89c776 100755
+index bb2042a..01707fe 100755
 --- a/sonix-player/src/gui/shell/quickpanel.c
 +++ b/sonix-player/src/gui/shell/quickpanel.c
-@@ -96,6 +96,7 @@ static lv_obj_t *sleep_audiobook_btn;
+@@ -12,6 +12,8 @@
+ #include "src/gui/settings/musicsettings.h"
+ #include "src/gui/audio/peqpage.h"
+ #include "src/gui/library/audiobooks.h"
++#include "src/gui/library/medialist.h"
++#include "src/gui/library/playlistpage.h"
+ #include "src/gui/nowplaying/player.h"
+ #include "src/gui/shell/scrolltext.h"
+ #include "src/gui/streaming/podcastpage.h"
+@@ -96,6 +98,10 @@ static lv_obj_t *sleep_audiobook_btn;
  static lv_obj_t *sleep_podcast_btn;
  static lv_obj_t *wifi_transfer_btn;
  static lv_obj_t *gapless_btn;
 +static lv_obj_t *power_btn;
++static lv_obj_t *playlists_btn;
++static lv_obj_t *favourites_btn;
++static lv_obj_t *soundfield_btn;
  
  // ---------------------------------------------------------------------------
  // Which buttons the panel carries, and where
-@@ -130,6 +131,7 @@ static const char *const button_key[QP_BTN_COUNT] = {
+@@ -130,6 +136,10 @@ static const char *const button_key[QP_BTN_COUNT] = {
  	[QP_BTN_SLEEP_PODCAST] = "sleep_podcast",
  	[QP_BTN_WIFI_TRANSFER] = "wifi_transfer",
  	[QP_BTN_GAPLESS] = "gapless",
 +	[QP_BTN_POWER] = "power",
++	[QP_BTN_PLAYLISTS] = "playlists",
++	[QP_BTN_FAVOURITES] = "favourites",
++	[QP_BTN_SOUNDFIELD] = "soundfield",
  };
  
  static const char *const button_tag[QP_BTN_COUNT] = {
-@@ -149,6 +151,7 @@ static const char *const button_tag[QP_BTN_COUNT] = {
+@@ -149,6 +159,10 @@ static const char *const button_tag[QP_BTN_COUNT] = {
  	[QP_BTN_SLEEP_PODCAST] = "quickpanel_sleep_podcast",
  	[QP_BTN_WIFI_TRANSFER] = "wifitransfer_title",
  	[QP_BTN_GAPLESS] = "musicsettings_gapless_playback",
 +	[QP_BTN_POWER] = "quickpanel_power_off",
++	[QP_BTN_PLAYLISTS] = "playlists",
++	[QP_BTN_FAVOURITES] = "favourites",
++	[QP_BTN_SOUNDFIELD] = "musicsettings_soundfield",
  };
  
  static uint8_t slots[QP_SLOT_COUNT];  // the grid, QP_BTN_NONE where it is empty
-@@ -1052,7 +1055,8 @@ static void order_load(void) {
+@@ -1053,7 +1067,9 @@ static void order_load(void) {
  		// panel nobody asked to change, so they wait among the unused ones, where
  		// the settings page shows them.
  		bool waits = i == QP_BTN_DLNA || i == QP_BTN_SLEEP_MUSIC || i == QP_BTN_SLEEP_AUDIOBOOK ||
 -					 i == QP_BTN_SLEEP_PODCAST || i == QP_BTN_WIFI_TRANSFER || i == QP_BTN_GAPLESS;
 +					 i == QP_BTN_SLEEP_PODCAST || i == QP_BTN_WIFI_TRANSFER || i == QP_BTN_GAPLESS ||
-+					 i == QP_BTN_POWER;
++					 i == QP_BTN_POWER || i == QP_BTN_PLAYLISTS ||
++					 i == QP_BTN_FAVOURITES || i == QP_BTN_SOUNDFIELD;
  		if ((saved_version < 2 && i == QP_BTN_FADE) || waits) {
  			hidden[hidden_n++] = (uint8_t)i;
  		} else {
-@@ -1171,6 +1175,8 @@ static lv_obj_t *button_widget(quickpanel_button_t which) {
+@@ -1172,6 +1188,14 @@ static lv_obj_t *button_widget(quickpanel_button_t which) {
  		return wifi_transfer_btn;
  	case QP_BTN_GAPLESS:
  		return gapless_btn;
 +	case QP_BTN_POWER:
 +		return power_btn;
++	case QP_BTN_PLAYLISTS:
++		return playlists_btn;
++	case QP_BTN_FAVOURITES:
++		return favourites_btn;
++	case QP_BTN_SOUNDFIELD:
++		return soundfield_btn;
  	default:
  		return NULL;
  	}
-@@ -1385,6 +1391,8 @@ const lv_image_dsc_t *quickpanel_button_icon(quickpanel_button_t button) {
+@@ -1386,6 +1410,14 @@ const lv_image_dsc_t *quickpanel_button_icon(quickpanel_button_t button) {
  		return &icon_wifi_transfer_quick;
  	case QP_BTN_GAPLESS:
  		return &icon_gapless_on_quick;
 +	case QP_BTN_POWER:
 +		return &icon_power_off;
++	case QP_BTN_PLAYLISTS:
++		return &icon_dlna_quick;
++	case QP_BTN_FAVOURITES:
++		return &icon_star_filled;
++	case QP_BTN_SOUNDFIELD:
++		return &icon_gapless_on_quick;
  	default:
  		return &icon_wifi;
  	}
-@@ -1405,6 +1413,16 @@ static void circle_guard_cb(lv_event_t *e) {
+@@ -1406,6 +1438,52 @@ static void circle_guard_cb(lv_event_t *e) {
  	}
  }
  
@@ -325,10 +510,86 @@ index e314f13..a89c776 100755
 +	power_shutdown();
 +}
 +
++// The playlists page, the way the Wi-Fi transfer page is opened from here: the
++// panel goes up, and if the player was over the page the sheet goes down first
++// and is put back when the page is left.
++static void playlists_clicked_cb(lv_event_t *e) {
++	(void)e;
++	quickpanel_close();
++	bool from_player = player_sheet_is_open();
++	if (from_player) {
++		player_sheet_close(false);
++	}
++	if (lv_screen_active() == playlistpage_screen) {
++		return; // already there: switching would record a step nobody took
++	}
++	playlistpage_open();
++	if (from_player) {
++		switcher_set_player_return(playlistpage_screen);
++	}
++}
++
++// The starred tracks, opened the same way. medialist_open() does nothing when
++// there is no card, so the player is only given a page to come back to if the
++// screen actually changed.
++static void favourites_clicked_cb(lv_event_t *e) {
++	(void)e;
++	quickpanel_close();
++	bool from_player = player_sheet_is_open();
++	if (from_player) {
++		player_sheet_close(false);
++	}
++	lv_obj_t *before = lv_screen_active();
++	medialist_open(tr("favourites"), LIBRARY_LIST_FAVOURITES, LIBRARY_FILTER_NONE, NULL);
++	if (from_player && lv_screen_active() != before) {
++		switcher_set_player_return(lv_screen_active());
++	}
++}
++
  // One round quick control: a circle in the pressed-surface colour with the
  // glyph centred on it. Callers attach their own handlers. Presses bubble on to
  // the sheet, so a drag that starts on a circle moves the sheet or the card like
-@@ -2064,6 +2082,12 @@ void quickpanel_init(gui_config_t *cfg) {
+@@ -1494,6 +1572,16 @@ static void refresh_audio_buttons(void) {
+ 		}
+ 	}
+ 	circle_button_set_on(gapless_btn, gapless);
++
++	// Soundfield wears the gapless drawing, the two halves closed up while it is on.
++	bool soundfield = soundfield_get_enabled();
++	if (soundfield_btn) {
++		lv_obj_t *icon = lv_obj_get_child(soundfield_btn, 0);
++		if (icon) {
++			lv_image_set_src(icon, soundfield ? &icon_gapless_on_quick : &icon_gapless_off_quick);
++		}
++	}
++	circle_button_set_on(soundfield_btn, soundfield);
+ }
+ 
+ // After a button has switched something: the circles repaint, and the page
+@@ -1835,6 +1923,22 @@ static void gapless_page_cb(lv_event_t *e) {
+ 	open_page(musicsettings_playback_screen());
+ }
+ 
++// Soundfield, the same two gestures: a tap flips it, a hold opens its page.
++static void soundfield_clicked_cb(lv_event_t *e) {
++	(void)e;
++	if (long_press_consumed) {
++		long_press_consumed = false;
++		return;
++	}
++	soundfield_set_enabled(!soundfield_get_enabled());
++	toggled();
++}
++
++static void soundfield_page_cb(lv_event_t *e) {
++	(void)e;
++	open_page(musicsettings_soundfield_screen());
++}
++
+ static void gain_clicked_cb(lv_event_t *e) {
+ 	(void)e;
+ 	if (long_press_consumed) {
+@@ -2101,6 +2205,25 @@ void quickpanel_init(gui_config_t *cfg) {
  	lv_obj_add_event_cb(gapless_btn, gapless_clicked_cb, LV_EVENT_CLICKED, NULL);
  	lv_obj_add_event_cb(gapless_btn, gapless_page_cb, LV_EVENT_LONG_PRESSED, NULL);
  
@@ -338,14 +599,27 @@ index e314f13..a89c776 100755
 +	lv_image_set_scale(lv_obj_get_child(power_btn, 0), 210);
 +	lv_obj_add_event_cb(power_btn, power_clicked_cb, LV_EVENT_CLICKED, NULL);
 +
++	// The DLNA glyph, which is already drawn at the size of the round buttons.
++	playlists_btn = make_circle_button(row, &icon_dlna_quick);
++	lv_obj_add_event_cb(playlists_btn, playlists_clicked_cb, LV_EVENT_CLICKED, NULL);
++
++	// The star from the playback screen's favourite button, at the 32 px it is
++	// drawn at there.
++	favourites_btn = make_circle_button(row, &icon_star_filled);
++	lv_obj_add_event_cb(favourites_btn, favourites_clicked_cb, LV_EVENT_CLICKED, NULL);
++
++	soundfield_btn = make_circle_button(row, &icon_gapless_off_quick);
++	lv_obj_add_event_cb(soundfield_btn, soundfield_clicked_cb, LV_EVENT_CLICKED, NULL);
++	lv_obj_add_event_cb(soundfield_btn, soundfield_page_cb, LV_EVENT_LONG_PRESSED, NULL);
++
  	bright_row = lv_obj_create(controls_card);
  	lv_obj_set_size(bright_row, lv_pct(100), BRIGHT_ROW_H);
  	lv_obj_set_style_bg_opa(bright_row, 0, 0);
 diff --git a/sonix-player/src/gui/shell/quickpanel.h b/sonix-player/src/gui/shell/quickpanel.h
-index ac72b19..a143199 100755
+index ac72b19..c27da9a 100755
 --- a/sonix-player/src/gui/shell/quickpanel.h
 +++ b/sonix-player/src/gui/shell/quickpanel.h
-@@ -67,6 +67,10 @@ typedef enum {
+@@ -67,6 +67,16 @@ typedef enum {
  	QP_BTN_SLEEP_PODCAST,
  	QP_BTN_WIFI_TRANSFER,
  	QP_BTN_GAPLESS,
@@ -353,6 +627,12 @@ index ac72b19..a143199 100755
 +	// pulled down first, which is the deliberate gesture the power menu's slide
 +	// stands in for.
 +	QP_BTN_POWER,
++	// Opens the playlists page, from wherever the panel was pulled down.
++	QP_BTN_PLAYLISTS,
++	// Opens the list of starred tracks.
++	QP_BTN_FAVOURITES,
++	// The soundfield switch: a tap flips it, a hold opens its page.
++	QP_BTN_SOUNDFIELD,
  	QP_BTN_COUNT,
  	QP_BTN_NONE = QP_BTN_COUNT, // an empty place in the grid
  } quickpanel_button_t;
