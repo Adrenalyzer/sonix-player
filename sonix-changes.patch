@@ -1,5 +1,5 @@
 diff --git a/FEATURES.md b/FEATURES.md
-index cfd8f8e..3b9c91f 100644
+index cfd8f8e..0cca94f 100644
 --- a/FEATURES.md
 +++ b/FEATURES.md
 @@ -54,6 +54,7 @@ This is everything Sonix Player can do today, on both the **R1** and the **R3 Pr
@@ -10,6 +10,15 @@ index cfd8f8e..3b9c91f 100644
  
  ## Now Playing
  
+@@ -77,7 +78,7 @@ This is everything Sonix Player can do today, on both the **R1** and the **R3 Pr
+   > PEQ presets are `.txt` files in the `PEQ` folder of the card, in the Equalizer APO format.
+ - **AutoEq** - type the name of your headphones and the player downloads their correction over Wi-Fi.
+ - **MSEB** - the same sound tuning as the stock HiBy player, with 10 sliders (Temperature, Extended bass, Bass texture, Note thickness, Vocals, Female overtones, Male vocal, Female vocal, Instruments, Air).
+-- **Soundfield** - make the stereo image narrower (down to mono) or wider.
++- **Soundfield** - make the stereo image narrower (down to mono) or wider, a hundredth at a time. It is part of MSEB: it is on when MSEB is on, sits at the top of the MSEB page, and is saved in MSEB's presets.
+ - **Crossfeed** - mixes a bit of each channel into the other, like speakers do.
+ - **Channel balance** and **Mono audio**.
+ - The EQ, PEQ and MSEB also work on radio and streaming.
 @@ -165,14 +166,13 @@ This is everything Sonix Player can do today, on both the **R1** and the **R3 Pr
  
  ## Control centre and status bar
@@ -863,7 +872,7 @@ index 6c4c300..e229df7 100755
  	// first playlist can be made.
  	lv_obj_t *new_row = lv_btn_create(list);
 diff --git a/sonix-player/src/gui/settings/musicsettings.c b/sonix-player/src/gui/settings/musicsettings.c
-index 7289816..af99e48 100755
+index 7289816..a551ec2 100755
 --- a/sonix-player/src/gui/settings/musicsettings.c
 +++ b/sonix-player/src/gui/settings/musicsettings.c
 @@ -26,6 +26,7 @@
@@ -874,36 +883,314 @@ index 7289816..af99e48 100755
  #include "src/system/audio/audio.h"
  #include "src/system/bluetooth/bluetooth.h"
  #include "src/system/audio/eq.h"
-@@ -344,6 +345,12 @@ static void soundfield_refresh(void) {
- 	settingsrow_toggle_slider_expanded(soundfield_card, on);
+@@ -170,6 +171,8 @@ static lv_obj_t *mseb_screen;
+ static lv_obj_t *mseb_enable_switch;
+ static lv_obj_t *mseb_sliders[MSEB_BANDS];
+ static lv_obj_t *mseb_values[MSEB_BANDS];
++// The soundfield's card, first on the page: part of MSEB, on and off with it.
++static lv_obj_t *mseb_stage_slider, *mseb_stage_value;
+ 
+ static lv_obj_t *mseb_reset_btn;
+ static lv_obj_t *eq_reset_btn;
+@@ -192,6 +195,13 @@ static void reset_button_enabled(lv_obj_t *btn, bool enabled) {
  }
  
-+// The control centre's button can flip the switch while this page is under it.
-+static void soundfield_refresh_cb(lv_event_t *e) {
-+	(void)e;
-+	soundfield_refresh();
+ static void mseb_apply_sliders_enabled(bool enabled) {
++	if (mseb_stage_slider) {
++		if (enabled) {
++			lv_obj_remove_state(mseb_stage_slider, LV_STATE_DISABLED);
++		} else {
++			lv_obj_add_state(mseb_stage_slider, LV_STATE_DISABLED);
++		}
++	}
+ 	for (int i = 0; i < MSEB_BANDS; i++) {
+ 		if (!mseb_sliders[i]) {
+ 			continue;
+@@ -222,12 +232,34 @@ static void mseb_slider_cb(lv_event_t *e) {
+ 	lv_label_set_text_fmt(mseb_values[band], "%+d", value);
+ }
+ 
++// The soundfield's slider is bipolar like the bands, on the width's own scale:
++// 1.00, the signal untouched, sits in the middle, wider to the right and
++// narrower to the left, a hundredth at a time.
++#define MSEB_STAGE_SPAN (SOUNDFIELD_WIDTH_MAX - SOUNDFIELD_WIDTH_DEFAULT)
++
++static void mseb_stage_set_label(int hundredths) {
++	// Printed by hand rather than with %.2f: the module is integer arithmetic
++	// and there is no reason to drag a float formatter in for two decimals.
++	lv_label_set_text_fmt(mseb_stage_value, "%d.%02d", hundredths / 100, hundredths % 100);
 +}
 +
- static void soundfield_toggle_cb(lv_event_t *e) {
++static void mseb_stage_slider_cb(lv_event_t *e) {
++	(void)e;
++	soundfield_set_width(SOUNDFIELD_WIDTH_DEFAULT + (int)lv_slider_get_value(mseb_stage_slider));
++	mseb_stage_set_label(soundfield_get_width());
++}
++
+ static void mseb_released_cb(lv_event_t *e) {
  	(void)e;
- 	soundfield_set_enabled(lv_obj_has_state(soundfield_switch, LV_STATE_CHECKED));
-@@ -375,6 +382,7 @@ static void build_soundfield_page(gui_config_t *cfg) {
- 	lv_label_set_text(note, tr("musicsettings_soundstage_note"));
- 
- 	soundfield_refresh();
-+	lv_obj_add_event_cb(soundfield_screen, soundfield_refresh_cb, LV_EVENT_REFRESH, NULL);
- 	switcher_attach_back_gesture(soundfield_screen);
+ 	mseb_save(); // one config write when the finger lifts, not per pixel
  }
  
-@@ -1136,6 +1144,7 @@ lv_obj_t *musicsettings_fade_screen(void) { return fade_screen; }
+ static void refresh_mseb_sliders(void) {
++	if (mseb_stage_slider) {
++		theme_apply_slider_knob(mseb_stage_slider);
++		lv_obj_set_style_bg_color(mseb_stage_slider, theme()->accent, LV_PART_INDICATOR);
++		lv_obj_set_style_bg_color(mseb_stage_slider, theme()->text_secondary, LV_PART_MAIN);
++	}
+ 	for (int i = 0; i < MSEB_BANDS; i++) {
+ 		theme_apply_slider_knob(mseb_sliders[i]);
+ 		if (mseb_sliders[i]) {
+@@ -312,72 +344,6 @@ static void build_fade_page(gui_config_t *cfg) {
+ 	switcher_attach_back_gesture(fade_screen);
+ }
  
- static lv_obj_t *playback_screen;
- lv_obj_t *musicsettings_playback_screen(void) { return playback_screen; }
-+lv_obj_t *musicsettings_soundfield_screen(void) { return soundfield_screen; }
+-// ---------------------------------------------------------------------------
+-// Soundfield: the stock player's Sound Field module (labelled "Campo sonoro"
+-// in its Italian strings), a stereo width control. The engine lives in eq.c;
+-// this is its page.
+-// ---------------------------------------------------------------------------
+-
+-static lv_obj_t *soundfield_screen;
+-static lv_obj_t *soundfield_switch;
+-static lv_obj_t *soundfield_card, *soundfield_value, *soundfield_slider;
+-
+-// 0.00 to 2.00 in steps of 0.05: exactly the range the original's own plugin
+-// declares for its "width" parameter.
+-#define SOUNDFIELD_STEPS ((SOUNDFIELD_WIDTH_MAX - SOUNDFIELD_WIDTH_MIN) / SOUNDFIELD_WIDTH_STEP + 1)
+-
+-static void soundfield_set_value_label(int hundredths) {
+-	// Printed by hand rather than with %.2f: the whole module is integer
+-	// arithmetic and there is no reason to drag a float formatter in for two
+-	// decimal places.
+-	lv_label_set_text_fmt(soundfield_value, "%d.%02d", hundredths / 100, hundredths % 100);
+-}
+-
+-static void soundfield_refresh(void) {
+-	bool on = soundfield_get_enabled();
+-	soundfield_set_value_label(soundfield_get_width());
+-	if (on) {
+-		lv_obj_add_state(soundfield_switch, LV_STATE_CHECKED);
+-	} else {
+-		lv_obj_remove_state(soundfield_switch, LV_STATE_CHECKED);
+-	}
+-	settingsrow_toggle_slider_expanded(soundfield_card, on);
+-}
+-
+-static void soundfield_toggle_cb(lv_event_t *e) {
+-	(void)e;
+-	soundfield_set_enabled(lv_obj_has_state(soundfield_switch, LV_STATE_CHECKED));
+-	soundfield_refresh();
+-}
+-
+-static void soundfield_slider_cb(lv_event_t *e) {
+-	(void)e;
+-	int hundredths = SOUNDFIELD_WIDTH_MIN + (int)lv_slider_get_value(soundfield_slider) * SOUNDFIELD_WIDTH_STEP;
+-	soundfield_set_width(hundredths);
+-	soundfield_set_value_label(soundfield_get_width());
+-}
+-
+-static void build_soundfield_page(gui_config_t *cfg) {
+-	soundfield_screen = lv_obj_create(NULL);
+-	lv_obj_t *container = settingsrow_page(soundfield_screen, cfg, "musicsettings_soundfield");
+-
+-	soundfield_card = settingsrow_toggle_slider(container, "musicsettings_soundfield", SOUNDFIELD_STEPS, &soundfield_switch,
+-											   &soundfield_value, &soundfield_slider, soundfield_toggle_cb,
+-											   soundfield_slider_cb);
+-	lv_slider_set_value(soundfield_slider,
+-						(soundfield_get_width() - SOUNDFIELD_WIDTH_MIN) / SOUNDFIELD_WIDTH_STEP, LV_ANIM_OFF);
+-
+-	lv_obj_t *note = lv_label_create(container);
+-	lv_label_set_long_mode(note, LV_LABEL_LONG_WRAP);
+-	lv_obj_set_width(note, lv_pct(100));
+-	lv_obj_add_style(note, &theme_style_text_dim, 0);
+-	lv_obj_set_style_text_font(note, &font_ui_22, 0);
+-	lv_label_set_text(note, tr("musicsettings_soundstage_note"));
+-
+-	soundfield_refresh();
+-	switcher_attach_back_gesture(soundfield_screen);
+-}
+-
+ // ---------------------------------------------------------------------------
+ // Crossfeed -- the engine is in eq.c, this is its page.
+ //
+@@ -840,6 +806,10 @@ static void eq_open_settings_cb(lv_event_t *e) {
+ // Puts every MSEB slider where the engine's values are -- after a reset, a
+ // preset, or a change of range (whose ends have just moved).
+ static void refresh_mseb_sliders_values(void) {
++	if (mseb_stage_slider) {
++		lv_slider_set_value(mseb_stage_slider, soundfield_get_width() - SOUNDFIELD_WIDTH_DEFAULT, LV_ANIM_OFF);
++		mseb_stage_set_label(soundfield_get_width());
++	}
+ 	int range = mseb_get_range();
+ 	for (int i = 0; i < MSEB_BANDS; i++) {
+ 		if (!mseb_sliders[i]) {
+@@ -851,6 +821,67 @@ static void refresh_mseb_sliders_values(void) {
+ 	}
+ }
  
- bool musicsettings_fade_enabled(void) { return config_get_bool("audio", "fade", false); }
++// One card of the MSEB page: a title, its value at the right, and a slider under
++// them. The bands and the soundfield are the same card.
++static lv_obj_t *mseb_make_slider_card(lv_obj_t *container, const char *title, lv_obj_t **value_out) {
++	lv_obj_t *card = lv_obj_create(container);
++	lv_obj_set_width(card, lv_pct(100));
++	lv_obj_set_height(card, 104);
++	lv_obj_add_style(card, &theme_style_card, 0);
++	lv_obj_set_style_radius(card, 12, 0);
++	lv_obj_set_style_border_width(card, 0, 0);
++	lv_obj_set_style_shadow_width(card, 0, 0);
++	lv_obj_set_style_pad_hor(card, 20, 0);
++	lv_obj_set_style_pad_ver(card, 12, 0);
++	lv_obj_set_scrollable(card, false);
++	lv_obj_set_event_bubble(card, true);
++
++	lv_obj_t *name = lv_label_create(card);
++	lv_label_set_text(name, title);
++	lv_obj_add_style(name, &theme_style_text, 0);
++	lv_obj_set_style_text_font(name, &font_ui_22, 0);
++	lv_obj_align(name, LV_ALIGN_TOP_LEFT, 0, 0);
++
++	lv_obj_t *value = lv_label_create(card);
++	lv_obj_add_style(value, &theme_style_text_dim, 0);
++	lv_obj_set_style_text_font(value, &font_ui_22, 0);
++	lv_obj_align(value, LV_ALIGN_TOP_RIGHT, 0, 0);
++	*value_out = value;
++
++	lv_obj_t *slider = lv_slider_create(card);
++	lv_obj_set_width(slider, lv_pct(100));
++	lv_obj_set_height(slider, 10);
++	lv_obj_align(slider, LV_ALIGN_BOTTOM_MID, 0, -10);
++	// MSEB sliders are bipolar: zero sits in the middle and the coloured
++	// bar grows from there, forwards for positives and backwards for
++	// negatives. Without symmetrical mode LVGL fills from the left, so "-3"
++	// would read as "almost nothing" rather than "a step below".
++	lv_slider_set_mode(slider, LV_SLIDER_MODE_SYMMETRICAL);
++
++	lv_obj_set_style_radius(slider, LV_RADIUS_CIRCLE, LV_PART_MAIN);
++	lv_obj_set_style_bg_color(slider, theme()->text_secondary, LV_PART_MAIN);
++	lv_obj_set_style_bg_opa(slider, LV_OPA_40, LV_PART_MAIN);
++	lv_obj_set_style_radius(slider, LV_RADIUS_CIRCLE, LV_PART_INDICATOR);
++	lv_obj_set_style_bg_color(slider, theme()->accent, LV_PART_INDICATOR);
++	lv_obj_set_style_radius(slider, LV_RADIUS_CIRCLE, LV_PART_KNOB);
++	lv_obj_set_style_bg_color(slider, lv_color_white(), LV_PART_KNOB);
++	theme_apply_slider_knob(slider);
++	lv_obj_set_style_pad_all(slider, 7, LV_PART_KNOB);
++	lv_obj_set_style_shadow_width(slider, 6, LV_PART_KNOB);
++	lv_obj_set_style_shadow_opa(slider, LV_OPA_30, LV_PART_KNOB);
++	lv_obj_set_style_shadow_color(slider, lv_color_black(), LV_PART_KNOB);
++	// Drag the knob, do not tap the track. A plain LVGL slider jumps its
++	// value to wherever the finger lands, so brushing a row on the way past
++	// would move a band. With ADV_HITTEST the slider only answers a press
++	// that begins on the knob; anywhere else on the track the press goes to
++	// the card behind it and scrolls the page.
++	lv_obj_set_adv_hittest(slider, true);
++	// The knob is 24 px across, and with ADV_HITTEST the extended click area
++	// belongs to the knob alone rather than padding the whole track.
++	lv_obj_set_ext_click_area(slider, 18);
++	return slider;
++}
++
+ static void build_mseb_page(gui_config_t *cfg) {
+ 	mseb_screen = lv_obj_create(NULL);
+ 	lv_obj_t *container = settingsrow_page(mseb_screen, cfg, "mseb");
+@@ -860,70 +891,26 @@ static void build_mseb_page(gui_config_t *cfg) {
+ 		lv_obj_add_state(mseb_enable_switch, LV_STATE_CHECKED);
+ 	}
  
-@@ -1799,6 +1808,72 @@ static void sleep_wheel_cb(lv_event_t *e) {
++	// The soundfield, first: part of MSEB, on with it, and kept in its presets.
++	mseb_stage_slider = mseb_make_slider_card(container, tr("musicsettings_soundfield"), &mseb_stage_value);
++	lv_slider_set_range(mseb_stage_slider, -MSEB_STAGE_SPAN, MSEB_STAGE_SPAN);
++	lv_slider_set_value(mseb_stage_slider, soundfield_get_width() - SOUNDFIELD_WIDTH_DEFAULT, LV_ANIM_OFF);
++	mseb_stage_set_label(soundfield_get_width());
++	lv_obj_add_event_cb(mseb_stage_slider, mseb_stage_slider_cb, LV_EVENT_VALUE_CHANGED, NULL);
++	lv_obj_add_event_cb(mseb_stage_slider, mseb_released_cb, LV_EVENT_RELEASED, NULL);
++
+ 	for (int i = 0; i < MSEB_BANDS; i++) {
+-		lv_obj_t *card = lv_obj_create(container);
+-		lv_obj_set_width(card, lv_pct(100));
+-		lv_obj_set_height(card, 104);
+-		lv_obj_add_style(card, &theme_style_card, 0);
+-		lv_obj_set_style_radius(card, 12, 0);
+-		lv_obj_set_style_border_width(card, 0, 0);
+-		lv_obj_set_style_shadow_width(card, 0, 0);
+-		lv_obj_set_style_pad_hor(card, 20, 0);
+-		lv_obj_set_style_pad_ver(card, 12, 0);
+-		lv_obj_set_scrollable(card, false);
+-		lv_obj_set_event_bubble(card, true);
+-
+-		lv_obj_t *name = lv_label_create(card);
+-		lv_label_set_text(name, tr(mseb_band_name[i]));
+-		lv_obj_add_style(name, &theme_style_text, 0);
+-		lv_obj_set_style_text_font(name, &font_ui_22, 0);
+-		lv_obj_align(name, LV_ALIGN_TOP_LEFT, 0, 0);
+-
+-		mseb_values[i] = lv_label_create(card);
+-		lv_label_set_text_fmt(mseb_values[i], "%+d", mseb_get_value(i));
+-		lv_obj_add_style(mseb_values[i], &theme_style_text_dim, 0);
+-		lv_obj_set_style_text_font(mseb_values[i], &font_ui_22, 0);
+-		lv_obj_align(mseb_values[i], LV_ALIGN_TOP_RIGHT, 0, 0);
+-
+-		lv_obj_t *slider = lv_slider_create(card);
+-		lv_obj_set_width(slider, lv_pct(100));
+-		lv_obj_set_height(slider, 10);
+-		lv_obj_align(slider, LV_ALIGN_BOTTOM_MID, 0, -10);
++		lv_obj_t *slider = mseb_make_slider_card(container, tr(mseb_band_name[i]), &mseb_values[i]);
+ 		lv_slider_set_range(slider, -mseb_get_range(), mseb_get_range());
+-		// MSEB sliders are bipolar: zero sits in the middle and the coloured
+-		// bar grows from there, forwards for positives and backwards for
+-		// negatives. Without symmetrical mode LVGL fills from the left, so "-3"
+-		// would read as "almost nothing" rather than "a step below".
+-		lv_slider_set_mode(slider, LV_SLIDER_MODE_SYMMETRICAL);
+ 		lv_slider_set_value(slider, mseb_get_value(i), LV_ANIM_OFF);
+-
+-		lv_obj_set_style_radius(slider, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+-		lv_obj_set_style_bg_color(slider, theme()->text_secondary, LV_PART_MAIN);
+-		lv_obj_set_style_bg_opa(slider, LV_OPA_40, LV_PART_MAIN);
+-		lv_obj_set_style_radius(slider, LV_RADIUS_CIRCLE, LV_PART_INDICATOR);
+-		lv_obj_set_style_bg_color(slider, theme()->accent, LV_PART_INDICATOR);
+-		lv_obj_set_style_radius(slider, LV_RADIUS_CIRCLE, LV_PART_KNOB);
+-		lv_obj_set_style_bg_color(slider, lv_color_white(), LV_PART_KNOB);
+-		theme_apply_slider_knob(slider);
+-		lv_obj_set_style_pad_all(slider, 7, LV_PART_KNOB);
+-		lv_obj_set_style_shadow_width(slider, 6, LV_PART_KNOB);
+-		lv_obj_set_style_shadow_opa(slider, LV_OPA_30, LV_PART_KNOB);
+-		lv_obj_set_style_shadow_color(slider, lv_color_black(), LV_PART_KNOB);
+-		// Drag the knob, do not tap the track. A plain LVGL slider jumps its
+-		// value to wherever the finger lands, so brushing a row on the way past
+-		// would move a band. With ADV_HITTEST the slider only answers a press
+-		// that begins on the knob; anywhere else on the track the press goes to
+-		// the card behind it and scrolls the page.
+-		lv_obj_set_adv_hittest(slider, true);
+-		// The knob is 24 px across, and with ADV_HITTEST the extended click area
+-		// belongs to the knob alone rather than padding the whole track.
+-		lv_obj_set_ext_click_area(slider, 18);
++		lv_label_set_text_fmt(mseb_values[i], "%+d", mseb_get_value(i));
+ 		lv_obj_add_event_cb(slider, mseb_slider_cb, LV_EVENT_VALUE_CHANGED, (void *)(intptr_t)i);
+ 		lv_obj_add_event_cb(slider, mseb_released_cb, LV_EVENT_RELEASED, NULL);
+ 
+ 		mseb_sliders[i] = slider;
+ 	}
+ 
++	lv_obj_set_style_opa(mseb_stage_slider, LV_OPA_40, LV_STATE_DISABLED);
+ 	for (int i = 0; i < MSEB_BANDS; i++) {
+ 		lv_obj_set_style_opa(mseb_sliders[i], LV_OPA_40, LV_STATE_DISABLED);
+ 	}
+@@ -1201,13 +1188,12 @@ void musicsettings_set_mseb_enabled(bool enabled) {
+ // The rows whose chevron says whether what lies behind it is on. Every row
+ // that can be switched off, not a selection of them: a green chevron on MSEB
+ // and a grey one on an enabled fade is not a nuance, it is a lie.
+-static lv_obj_t *eq_row, *peq_row, *mseb_row, *soundfield_row, *crossfeed_row, *fade_row, *balance_row, *vlimit_row;
++static lv_obj_t *eq_row, *peq_row, *mseb_row, *crossfeed_row, *fade_row, *balance_row, *vlimit_row;
+ 
+ static void refresh_active_chevrons(void) {
+ 	settingsrow_chevron_active(eq_row, eq_get_enabled());
+ 	settingsrow_chevron_active(peq_row, peq_get_enabled());
+ 	settingsrow_chevron_active(mseb_row, mseb_get_enabled());
+-	settingsrow_chevron_active(soundfield_row, soundfield_get_enabled());
+ 	settingsrow_chevron_active(crossfeed_row, crossfeed_get_enabled());
+ 	settingsrow_chevron_active(fade_row, musicsettings_fade_enabled());
+ 	settingsrow_chevron_active(balance_row, balance_get_enabled());
+@@ -1799,6 +1785,72 @@ static void sleep_wheel_cb(lv_event_t *e) {
  	sleeptimer_set_minutes(SLEEPTIMER_MUSIC, settingsrow_duration_minutes(&sleep_row));
  }
  
@@ -976,7 +1263,7 @@ index 7289816..af99e48 100755
  // The control centre switches the same timer from outside this page, so the
  // switch and the wheels are read again every time the page comes up.
  static void playback_loaded_cb(lv_event_t *e) {
-@@ -1895,6 +1970,11 @@ static void build_playback_page(gui_config_t *cfg) {
+@@ -1895,6 +1947,11 @@ static void build_playback_page(gui_config_t *cfg) {
  	// is the one under it.
  	lv_obj_add_event_cb(playback_screen, playback_loaded_cb, LV_EVENT_REFRESH, NULL);
  
@@ -988,7 +1275,7 @@ index 7289816..af99e48 100755
  	// One record into the next, instead of the queue simply running out.
  	settingsrow_toggle(container, "musicsettings_play_albums_back_to_back", &album_chain_switch, album_chain_cb);
  	// What "back to back" means here, since the answer is not obvious: the next
-@@ -1939,20 +2019,19 @@ void musicsettings_init(gui_config_t *cfg) {
+@@ -1939,20 +1996,19 @@ void musicsettings_init(gui_config_t *cfg) {
  	// and Last.fm, which only reports what was played. Then the sound, from the
  	// widest tool to the narrowest, and the DAC's own switches at the end.
  	artistexceptions_init(cfg, organize_touched);
@@ -1011,17 +1298,30 @@ index 7289816..af99e48 100755
  
  	build_eq_page(cfg);
  	eq_row = settingsrow_add(container, "equaliser", NULL, switch_screen_cb, eq_screen);
+@@ -1966,12 +2022,9 @@ void musicsettings_init(gui_config_t *cfg) {
+ 	build_mseb_page(cfg);
+ 	mseb_row = settingsrow_add(container, "mseb", NULL, switch_screen_cb, mseb_screen);
+ 
+-	build_soundfield_page(cfg);
+-	soundfield_row = settingsrow_add(container, "musicsettings_soundfield", NULL, switch_screen_cb, soundfield_screen);
+-
+-	// Crossfeed sits next to soundfield because they are relatives: one widens
+-	// the stereo image, the other pulls it back inside the head. Anyone looking
+-	// for one wants to see the other.
++	// Crossfeed sits next to MSEB, which carries the soundfield: one widens the
++	// stereo image, the other pulls it back inside the head. Anyone looking for
++	// one wants to see the other.
+ 	build_crossfeed_page(cfg);
+ 	crossfeed_row = settingsrow_add(container, "musicsettings_crossfeed", NULL, switch_screen_cb, crossfeed_screen);
+ 
 diff --git a/sonix-player/src/gui/settings/musicsettings.h b/sonix-player/src/gui/settings/musicsettings.h
-index 4474f3c..403b35c 100755
+index 4474f3c..cdfe7e3 100755
 --- a/sonix-player/src/gui/settings/musicsettings.h
 +++ b/sonix-player/src/gui/settings/musicsettings.h
-@@ -31,6 +31,13 @@ lv_obj_t *musicsettings_fade_screen(void);
+@@ -31,6 +31,10 @@ lv_obj_t *musicsettings_fade_screen(void);
  // The playback options page, which holds the music sleep timer: what the
  // control centre's sleep button for music opens on a long press.
  lv_obj_t *musicsettings_playback_screen(void);
-+
-+// The soundfield page, for the control centre's button to open on a hold.
-+lv_obj_t *musicsettings_soundfield_screen(void);
 +
 +// The workout timer's page, with its length and its sound: what the control
 +// centre's workout button opens on a long press.
@@ -1829,7 +2129,7 @@ index 862c419..ad3354a 100755
  		{"audiobooks", &icon_menu_audiobooks, &audiobooks_screen},
  		// The door to the More page, which holds the DAC and anything else
 diff --git a/sonix-player/src/gui/shell/quickpanel.c b/sonix-player/src/gui/shell/quickpanel.c
-index bb2042a..d4bb7fb 100755
+index bb2042a..aa13cab 100755
 --- a/sonix-player/src/gui/shell/quickpanel.c
 +++ b/sonix-player/src/gui/shell/quickpanel.c
 @@ -12,6 +12,8 @@
@@ -1849,54 +2149,51 @@ index bb2042a..d4bb7fb 100755
  #include "src/system/device/power.h"
  #include "src/system/streaming/qobuzcache.h"
  #include "src/system/streaming/qobuzsync.h"
-@@ -96,6 +99,11 @@ static lv_obj_t *sleep_audiobook_btn;
+@@ -96,6 +99,10 @@ static lv_obj_t *sleep_audiobook_btn;
  static lv_obj_t *sleep_podcast_btn;
  static lv_obj_t *wifi_transfer_btn;
  static lv_obj_t *gapless_btn;
 +static lv_obj_t *power_btn;
 +static lv_obj_t *playlists_btn;
 +static lv_obj_t *favourites_btn;
-+static lv_obj_t *soundfield_btn;
 +static lv_obj_t *workout_btn;
  
  // ---------------------------------------------------------------------------
  // Which buttons the panel carries, and where
-@@ -130,6 +138,11 @@ static const char *const button_key[QP_BTN_COUNT] = {
+@@ -130,6 +137,10 @@ static const char *const button_key[QP_BTN_COUNT] = {
  	[QP_BTN_SLEEP_PODCAST] = "sleep_podcast",
  	[QP_BTN_WIFI_TRANSFER] = "wifi_transfer",
  	[QP_BTN_GAPLESS] = "gapless",
 +	[QP_BTN_POWER] = "power",
 +	[QP_BTN_PLAYLISTS] = "playlists",
 +	[QP_BTN_FAVOURITES] = "favourites",
-+	[QP_BTN_SOUNDFIELD] = "soundfield",
 +	[QP_BTN_WORKOUT] = "workout",
  };
  
  static const char *const button_tag[QP_BTN_COUNT] = {
-@@ -149,6 +162,11 @@ static const char *const button_tag[QP_BTN_COUNT] = {
+@@ -149,6 +160,10 @@ static const char *const button_tag[QP_BTN_COUNT] = {
  	[QP_BTN_SLEEP_PODCAST] = "quickpanel_sleep_podcast",
  	[QP_BTN_WIFI_TRANSFER] = "wifitransfer_title",
  	[QP_BTN_GAPLESS] = "musicsettings_gapless_playback",
 +	[QP_BTN_POWER] = "quickpanel_power_off",
 +	[QP_BTN_PLAYLISTS] = "playlists",
 +	[QP_BTN_FAVOURITES] = "favourites",
-+	[QP_BTN_SOUNDFIELD] = "musicsettings_soundfield",
 +	[QP_BTN_WORKOUT] = "workout_timer",
  };
  
  static uint8_t slots[QP_SLOT_COUNT];  // the grid, QP_BTN_NONE where it is empty
-@@ -1053,7 +1071,9 @@ static void order_load(void) {
+@@ -1053,7 +1068,9 @@ static void order_load(void) {
  		// panel nobody asked to change, so they wait among the unused ones, where
  		// the settings page shows them.
  		bool waits = i == QP_BTN_DLNA || i == QP_BTN_SLEEP_MUSIC || i == QP_BTN_SLEEP_AUDIOBOOK ||
 -					 i == QP_BTN_SLEEP_PODCAST || i == QP_BTN_WIFI_TRANSFER || i == QP_BTN_GAPLESS;
 +					 i == QP_BTN_SLEEP_PODCAST || i == QP_BTN_WIFI_TRANSFER || i == QP_BTN_GAPLESS ||
 +					 i == QP_BTN_POWER || i == QP_BTN_PLAYLISTS ||
-+					 i == QP_BTN_FAVOURITES || i == QP_BTN_SOUNDFIELD || i == QP_BTN_WORKOUT;
++					 i == QP_BTN_FAVOURITES || i == QP_BTN_WORKOUT;
  		if ((saved_version < 2 && i == QP_BTN_FADE) || waits) {
  			hidden[hidden_n++] = (uint8_t)i;
  		} else {
-@@ -1172,6 +1192,16 @@ static lv_obj_t *button_widget(quickpanel_button_t which) {
+@@ -1172,6 +1189,14 @@ static lv_obj_t *button_widget(quickpanel_button_t which) {
  		return wifi_transfer_btn;
  	case QP_BTN_GAPLESS:
  		return gapless_btn;
@@ -1906,14 +2203,12 @@ index bb2042a..d4bb7fb 100755
 +		return playlists_btn;
 +	case QP_BTN_FAVOURITES:
 +		return favourites_btn;
-+	case QP_BTN_SOUNDFIELD:
-+		return soundfield_btn;
 +	case QP_BTN_WORKOUT:
 +		return workout_btn;
  	default:
  		return NULL;
  	}
-@@ -1386,6 +1416,16 @@ const lv_image_dsc_t *quickpanel_button_icon(quickpanel_button_t button) {
+@@ -1386,6 +1411,14 @@ const lv_image_dsc_t *quickpanel_button_icon(quickpanel_button_t button) {
  		return &icon_wifi_transfer_quick;
  	case QP_BTN_GAPLESS:
  		return &icon_gapless_on_quick;
@@ -1923,14 +2218,12 @@ index bb2042a..d4bb7fb 100755
 +		return &icon_dlna_quick;
 +	case QP_BTN_FAVOURITES:
 +		return &icon_star_filled;
-+	case QP_BTN_SOUNDFIELD:
-+		return &icon_gapless_on_quick;
 +	case QP_BTN_WORKOUT:
 +		return &icon_workout_quick;
  	default:
  		return &icon_wifi;
  	}
-@@ -1406,6 +1446,52 @@ static void circle_guard_cb(lv_event_t *e) {
+@@ -1406,6 +1439,52 @@ static void circle_guard_cb(lv_event_t *e) {
  	}
  }
  
@@ -1983,7 +2276,7 @@ index bb2042a..d4bb7fb 100755
  // One round quick control: a circle in the pressed-surface colour with the
  // glyph centred on it. Callers attach their own handlers. Presses bubble on to
  // the sheet, so a drag that starts on a circle moves the sheet or the card like
-@@ -1472,6 +1558,7 @@ static void refresh_audio_buttons(void) {
+@@ -1472,6 +1551,7 @@ static void refresh_audio_buttons(void) {
  	circle_button_set_on(sleep_music_btn, sleep_timer_armed(SLEEPTIMER_MUSIC));
  	circle_button_set_on(sleep_audiobook_btn, sleep_timer_armed(SLEEPTIMER_AUDIOBOOK));
  	circle_button_set_on(sleep_podcast_btn, sleep_timer_armed(SLEEPTIMER_PODCAST));
@@ -1991,24 +2284,7 @@ index bb2042a..d4bb7fb 100755
  	circle_button_set_on(wifi_transfer_btn, wifitransfer_get_enabled());
  
  	bool high = musicsettings_high_gain();
-@@ -1494,6 +1581,16 @@ static void refresh_audio_buttons(void) {
- 		}
- 	}
- 	circle_button_set_on(gapless_btn, gapless);
-+
-+	// Soundfield wears the gapless drawing, the two halves closed up while it is on.
-+	bool soundfield = soundfield_get_enabled();
-+	if (soundfield_btn) {
-+		lv_obj_t *icon = lv_obj_get_child(soundfield_btn, 0);
-+		if (icon) {
-+			lv_image_set_src(icon, soundfield ? &icon_gapless_on_quick : &icon_gapless_off_quick);
-+		}
-+	}
-+	circle_button_set_on(soundfield_btn, soundfield);
- }
- 
- // After a button has switched something: the circles repaint, and the page
-@@ -1746,6 +1843,43 @@ static void sleep_page_cb(lv_event_t *e) {
+@@ -1746,6 +1826,43 @@ static void sleep_page_cb(lv_event_t *e) {
  	open_page(screen);
  }
  
@@ -2052,30 +2328,7 @@ index bb2042a..d4bb7fb 100755
  // DLNA, the third of the same family: a phone pushes music at the player over
  // the network, so without one there is nothing to push it from.
  static void dlna_clicked_cb(lv_event_t *e) {
-@@ -1835,6 +1969,22 @@ static void gapless_page_cb(lv_event_t *e) {
- 	open_page(musicsettings_playback_screen());
- }
- 
-+// Soundfield, the same two gestures: a tap flips it, a hold opens its page.
-+static void soundfield_clicked_cb(lv_event_t *e) {
-+	(void)e;
-+	if (long_press_consumed) {
-+		long_press_consumed = false;
-+		return;
-+	}
-+	soundfield_set_enabled(!soundfield_get_enabled());
-+	toggled();
-+}
-+
-+static void soundfield_page_cb(lv_event_t *e) {
-+	(void)e;
-+	open_page(musicsettings_soundfield_screen());
-+}
-+
- static void gain_clicked_cb(lv_event_t *e) {
- 	(void)e;
- 	if (long_press_consumed) {
-@@ -2101,6 +2251,29 @@ void quickpanel_init(gui_config_t *cfg) {
+@@ -2101,6 +2218,25 @@ void quickpanel_init(gui_config_t *cfg) {
  	lv_obj_add_event_cb(gapless_btn, gapless_clicked_cb, LV_EVENT_CLICKED, NULL);
  	lv_obj_add_event_cb(gapless_btn, gapless_page_cb, LV_EVENT_LONG_PRESSED, NULL);
  
@@ -2093,10 +2346,6 @@ index bb2042a..d4bb7fb 100755
 +	// drawn at there.
 +	favourites_btn = make_circle_button(row, &icon_star_filled);
 +	lv_obj_add_event_cb(favourites_btn, favourites_clicked_cb, LV_EVENT_CLICKED, NULL);
-+
-+	soundfield_btn = make_circle_button(row, &icon_gapless_off_quick);
-+	lv_obj_add_event_cb(soundfield_btn, soundfield_clicked_cb, LV_EVENT_CLICKED, NULL);
-+	lv_obj_add_event_cb(soundfield_btn, soundfield_page_cb, LV_EVENT_LONG_PRESSED, NULL);
 +	workout_btn = make_circle_button(row, &icon_workout_quick);
 +	lv_obj_add_event_cb(workout_btn, workout_clicked_cb, LV_EVENT_CLICKED, NULL);
 +	lv_obj_add_event_cb(workout_btn, workout_page_cb, LV_EVENT_LONG_PRESSED, NULL);
@@ -2106,10 +2355,10 @@ index bb2042a..d4bb7fb 100755
  	lv_obj_set_size(bright_row, lv_pct(100), BRIGHT_ROW_H);
  	lv_obj_set_style_bg_opa(bright_row, 0, 0);
 diff --git a/sonix-player/src/gui/shell/quickpanel.h b/sonix-player/src/gui/shell/quickpanel.h
-index ac72b19..3dcdb65 100755
+index ac72b19..1b38d71 100755
 --- a/sonix-player/src/gui/shell/quickpanel.h
 +++ b/sonix-player/src/gui/shell/quickpanel.h
-@@ -67,6 +67,17 @@ typedef enum {
+@@ -67,6 +67,15 @@ typedef enum {
  	QP_BTN_SLEEP_PODCAST,
  	QP_BTN_WIFI_TRANSFER,
  	QP_BTN_GAPLESS,
@@ -2121,8 +2370,6 @@ index ac72b19..3dcdb65 100755
 +	QP_BTN_PLAYLISTS,
 +	// Opens the list of starred tracks.
 +	QP_BTN_FAVOURITES,
-+	// The soundfield switch: a tap flips it, a hold opens its page.
-+	QP_BTN_SOUNDFIELD,
 +	QP_BTN_WORKOUT, // the workout timer: one more than the grid holds, so it starts among the unused
  	QP_BTN_COUNT,
  	QP_BTN_NONE = QP_BTN_COUNT, // an empty place in the grid
@@ -2659,6 +2906,164 @@ index 0000000..fd29ee3
 +void cue_mix_s32(int32_t *samples, int frames, int channels, int rate);
 +
 +#endif /* CUE_H */
+diff --git a/sonix-player/src/system/audio/eq.c b/sonix-player/src/system/audio/eq.c
+index d73d1fb..9c8c74d 100755
+--- a/sonix-player/src/system/audio/eq.c
++++ b/sonix-player/src/system/audio/eq.c
+@@ -53,10 +53,9 @@ static char peq_preset_dir[512];
+ static volatile int mseb_enabled;
+ static volatile unsigned settings_version = 1;
+ 
+-// Soundfield: on/off and the stereo width in hundredths (100 = untouched).
+-// It sits outside `settings_version` on purpose -- it has no coefficients to
+-// rebuild, the audio thread just reads the two numbers per buffer.
+-static volatile int sf_enabled;
++// Soundfield: the stereo width in hundredths (100 = untouched), on and off with
++// MSEB. It sits outside `settings_version` on purpose -- it has no coefficients
++// to rebuild, the audio thread just reads the two numbers per buffer.
+ static volatile int sf_width = SOUNDFIELD_WIDTH_DEFAULT;
+ 
+ // ---------------------------------------------------------------------------
+@@ -253,7 +252,6 @@ void eq_init(void) {
+ 		}
+ 		band_gain_db[i] = (int)g;
+ 	}
+-	sf_enabled = (int)config_get_int("soundfield", "enabled", 0);
+ 	sf_width = clamp_width((int)config_get_int("soundfield", "width", SOUNDFIELD_WIDTH_DEFAULT));
+ 
+ 	bal_enabled = (int)config_get_int("balance", "enabled", 0);
+@@ -1068,6 +1066,7 @@ void mseb_reset(void) {
+ 	for (int i = 0; i < MSEB_BANDS; i++) {
+ 		mseb_value[i] = 0;
+ 	}
++	sf_width = SOUNDFIELD_WIDTH_DEFAULT; // the soundfield is part of MSEB: back to untouched
+ 	settings_version++;
+ 	mseb_save();
+ }
+@@ -1110,7 +1109,7 @@ bool mseb_preset_save(const char *name) {
+ 		fprintf(stderr, "mseb: cannot write '%s': %s\n", path, strerror(errno));
+ 		return false;
+ 	}
+-	fprintf(f, "# MSEB preset\nrange=%d\n", mseb_range);
++	fprintf(f, "# MSEB preset\nrange=%d\nsoundstage=%d\n", mseb_range, sf_width);
+ 	for (int i = 0; i < MSEB_BANDS; i++) {
+ 		fprintf(f, "v%d=%d\n", i, mseb_value[i]);
+ 	}
+@@ -1131,11 +1130,14 @@ bool mseb_preset_load(const char *name) {
+ 
+ 	int values[MSEB_BANDS] = {0};
+ 	int range = mseb_range;
++	int stage = -1; // -1: a preset from before the soundfield belonged to MSEB, which says nothing about it
+ 	char line[128];
+ 	while (fgets(line, sizeof(line), f)) {
+ 		int index = 0, value = 0;
+ 		if (sscanf(line, "range=%d", &value) == 1) {
+ 			range = value;
++		} else if (sscanf(line, "soundstage=%d", &value) == 1) {
++			stage = value;
+ 		} else if (sscanf(line, "v%d=%d", &index, &value) == 2 && index >= 0 && index < MSEB_BANDS) {
+ 			values[index] = value;
+ 		}
+@@ -1146,6 +1148,9 @@ bool mseb_preset_load(const char *name) {
+ 	for (int i = 0; i < MSEB_BANDS; i++) {
+ 		mseb_set_value(i, values[i]);
+ 	}
++	if (stage >= 0) {
++		soundfield_set_width(stage);
++	}
+ 	mseb_save();
+ 	return true;
+ }
+@@ -1192,6 +1197,7 @@ void mseb_save(void) {
+ 		snprintf(key, sizeof(key), "v%d", i);
+ 		config_set_int("mseb", key, mseb_value[i]);
+ 	}
++	config_set_int("soundfield", "width", sf_width);
+ 	config_save();
+ }
+ 
+@@ -2053,18 +2059,11 @@ void eq_process_s32(int32_t *frames, int frame_count, int channels, int sample_r
+ // the bottom bit is worse than no module at all.
+ // ---------------------------------------------------------------------------
+ 
+-void soundfield_set_enabled(bool enabled) {
+-	sf_enabled = enabled ? 1 : 0;
+-	config_set_int("soundfield", "enabled", sf_enabled);
+-	config_save();
+-}
+-
+-bool soundfield_get_enabled(void) { return sf_enabled != 0; }
+-
++// Part of MSEB (see eq.h): there is no switch here, and the width is written by
++// mseb_save() with the bands, so a drag is one config write when the finger
++// lifts and not one per pixel.
+ void soundfield_set_width(int hundredths) {
+ 	sf_width = clamp_width(hundredths);
+-	config_set_int("soundfield", "width", sf_width);
+-	config_save();
+ }
+ 
+ int soundfield_get_width(void) { return sf_width; }
+@@ -2148,8 +2147,9 @@ void mono_process_s32(int32_t *frames, int frame_count, int channels) {
+ void soundfield_process(short *frames, int frame_count, int channels) {
+ 	int w = sf_width;
+ 	// Stereo only, exactly as the original: there is no width to speak of in a
+-	// mono stream, and the module has nothing to say about anything else.
+-	if (!sf_enabled || w == 100 || channels != 2 || frame_count <= 0 || !frames) {
++	// mono stream, and the module has nothing to say about anything else. It
++	// runs with MSEB, and with nothing else.
++	if (!mseb_enabled || w == 100 || channels != 2 || frame_count <= 0 || !frames) {
+ 		return;
+ 	}
+ 
+@@ -2180,7 +2180,7 @@ void soundfield_process(short *frames, int frame_count, int channels) {
+ 
+ void soundfield_process_s32(int32_t *frames, int frame_count, int channels) {
+ 	int w = sf_width;
+-	if (!sf_enabled || w == 100 || channels != 2 || frame_count <= 0 || !frames) {
++	if (!mseb_enabled || w == 100 || channels != 2 || frame_count <= 0 || !frames) {
+ 		return;
+ 	}
+ 
+diff --git a/sonix-player/src/system/audio/eq.h b/sonix-player/src/system/audio/eq.h
+index 49148b8..99610aa 100755
+--- a/sonix-player/src/system/audio/eq.h
++++ b/sonix-player/src/system/audio/eq.h
+@@ -202,7 +202,7 @@ void mseb_set_enabled(bool enabled); // saved to config
+ bool mseb_get_enabled(void);
+ void mseb_set_value(int band, int value); // clamped; NOT saved (see mseb_save)
+ int mseb_get_value(int band);
+-void mseb_save(void); // persists every value; call when a finger lifts
++void mseb_save(void); // persists every value, and the soundfield width; call when a finger lifts
+ 
+ // The slider travel: 20 (the stock player's own), 40 or 100. Saved, and it
+ // clamps whatever no longer fits when it narrows.
+@@ -242,16 +242,19 @@ int mseb_preset_for_each(mseb_preset_cb_t cb, void *user);
+ // way to the samples.
+ #define SOUNDFIELD_WIDTH_MIN 0
+ #define SOUNDFIELD_WIDTH_MAX 200
+-#define SOUNDFIELD_WIDTH_STEP 5
++// One hundredth, so a slider can move a digit at a time. The original plugin
++// steps by 0.05, but nothing in the arithmetic below needs that.
++#define SOUNDFIELD_WIDTH_STEP 1
+ #define SOUNDFIELD_WIDTH_DEFAULT 100
+ 
+-void soundfield_set_enabled(bool enabled); // saved to config
+-bool soundfield_get_enabled(void);
+-void soundfield_set_width(int hundredths); // clamped and snapped to the step
++// Soundfield has no switch of its own. It is part of MSEB: it runs when MSEB is
++// on and not otherwise, its width is kept in MSEB's presets, and MSEB's reset
++// puts it back to 1.00.
++void soundfield_set_width(int hundredths); // clamped and snapped to the step; NOT saved (see mseb_save)
+ int soundfield_get_width(void);
+ 
+-// In place on interleaved PCM, audio thread only. A no-op when the module is
+-// off, when the width is 1.00, or when the stream is not stereo.
++// In place on interleaved PCM, audio thread only. A no-op when MSEB is off,
++// when the width is 1.00, or when the stream is not stereo.
+ void soundfield_process(short *frames, int frame_count, int channels);
+ void soundfield_process_s32(int32_t *frames, int frame_count, int channels);
+ 
 diff --git a/sonix-player/src/system/decode/decode.c b/sonix-player/src/system/decode/decode.c
 index e6f5580..5966793 100755
 --- a/sonix-player/src/system/decode/decode.c
