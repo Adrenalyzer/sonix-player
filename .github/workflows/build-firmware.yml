@@ -109,13 +109,9 @@ jobs:
       - name: Get the stock R1 firmware
         run: |
           git clone --depth 1 https://github.com/hiby-modding/hiby_os_crack.git /tmp/hiby_os_crack
-          cp "/tmp/hiby_os_crack/r1/firmware/original/r1(v1.6).upt" sonix-packer/r1_original.upt
+          cp "/tmp/hiby_os_crack/firmwares/r1/original/r1(v1.6).upt"  sonix-packer/r1_original.upt
           ls -l sonix-packer/r1_original.upt
-- name: Fix firmware path
-  run: |
-    mkdir -p /tmp/hiby_os_crack/r1/firmware/original
-    cp "/tmp/hiby_os_crack/firmwares/r1/original/r1(v1.6).upt" \
-       "/tmp/hiby_os_crack/r1/firmware/original/r1(v1.6).upt"
+
       - name: Pack the firmware
         working-directory: sonix-packer
         run: |
